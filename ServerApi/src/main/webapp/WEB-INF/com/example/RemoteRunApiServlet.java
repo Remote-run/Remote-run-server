@@ -1,3 +1,4 @@
+package com.example;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -5,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,22 +43,24 @@ public class RemoteRunApiServlet extends HttpServlet {
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 
         System.out.println("Recived rest");
-        File outFile = new File("/test.gzip");
-        outFile.createNewFile();
+        File tmpOut = new File("/tmp/test.gzip");
+        tmpOut.createNewFile();
+
         System.out.println("11");
-        FileOutputStream outputStream = new FileOutputStream(outFile);
+        FileOutputStream outputStream = new FileOutputStream(tmpOut);
         System.out.println("2");
         InputStream inputStream = request.getInputStream();
         System.out.println("3");
         byte[] buffer = new byte[4096];
-        int bytesRead = -1;
+        int bytesRead;
         System.out.println("starting dtata read");
 
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
+
+        while ((bytesRead = inputStream.read(buffer)) >= 0) {
             outputStream.write(buffer, 0, bytesRead);
         }
         System.out.println("WTF done");
-        System.out.println(outFile.getCanonicalPath());
+        System.out.println(tmpOut);
 
         //String name = request.getParameter("name");
         //String about = request.getParameter("about");
@@ -68,9 +69,30 @@ public class RemoteRunApiServlet extends HttpServlet {
         outputStream.close();
         inputStream.close();
 
-        Compression.unzip(outFile.getCanonicalFile(), new File("/runvol/out.zip"));
+        System.out.println("4");
+
+
+        System.out.println("5aa");
+        File f = new File("/runvol");
+
+        System.out.println(tmpOut.exists());
+        System.out.println(tmpOut.canRead());
+        System.out.println(tmpOut.setReadable(true));
+        System.out.println(new File("/runvol/out").exists());
+        System.out.println(new File("/runvol").canWrite());
+        try{
+            Compression.unzip(tmpOut, f);
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+            System.out.println(e.toString());
+        }
+
+        System.out.println("5.2");
+        //tmpOut.delete();
+        System.out.println("5.5");
 
         response.getOutputStream().println("all ok");
+        System.out.println("6");
 
     }
 }

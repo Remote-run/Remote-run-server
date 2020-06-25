@@ -1,3 +1,5 @@
+package com.example;
+
 import java.io.*;
 import java.nio.file.FileAlreadyExistsException;
 import java.util.zip.*;
@@ -164,7 +166,7 @@ public class Compression {
 
         byte[] buffer = new byte[4096];
         int bytes_read;
-        while ((bytes_read = inputStream.read(buffer)) != -1) {
+        while ((bytes_read = inputStream.read(buffer)) >= 0) {
             gzipOutputStream.write(buffer, 0, bytes_read);
         }
 
@@ -180,7 +182,7 @@ public class Compression {
 
         byte[] buffer = new byte[4096];
         int bytes_read;
-        while ((bytes_read = gzipInputStream.read(buffer)) != -1) {
+        while ((bytes_read = gzipInputStream.read(buffer)) >= 0) {
             outputStream.write(buffer, 0, bytes_read);
         }
 
