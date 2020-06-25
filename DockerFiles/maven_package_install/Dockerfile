@@ -1,9 +1,8 @@
 FROM cuda_openjdk:latest
 
 ARG SharedDir
-RUN mkdir -p /run/save_data
-RUN ln -s /run/save_data /$SharedDir
-WORKDIR /code
+RUN mkdir -p /save_data
+RUN ln -s /save_data /$SharedDir
 
-ADD ./deeplearning4j-example-sample-1.0.0-beta7-bin.jar .
-CMD java -cp /deeplearning4j-example-sample-1.0.0-beta7-bin.jar org.example.LeNetMNIST | tee /$SharedDir/sdout
+WORKDIR /app/*
+#CMD mvn install && mvn package && mvn -e exec:java | tee /$SharedDir/sdout
