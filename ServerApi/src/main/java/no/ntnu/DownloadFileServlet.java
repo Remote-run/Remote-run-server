@@ -1,3 +1,4 @@
+package no.ntnu;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,13 +1,15 @@
- import java.util.HashMap;
+package no.ntnu;
+
+import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Example DataStore class that provides access to user data.
+ * Example com.example.DataStore class that provides access to user data.
  * Pretend this class accesses a database.
  */
 public class DataStore {
 
-    //Map of names to Person instances.
+    //Map of names to com.example.Person instances.
     private Map<String, Person> personMap = new HashMap<>();
 
     //this class is a singleton and should not be instantiated directly!

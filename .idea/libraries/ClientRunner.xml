@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="ClientRunner">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../Run-on-server-client-java/ClientRunner" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../Run-on-server-client-java/ClientRunner/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../Run-on-server-client-java/ClientRunner/src/test/java" />
+    </SOURCES>
+  </library>
+</component>

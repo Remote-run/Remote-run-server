@@ -1,0 +1,26 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="Server:war exploded">
+    <output-path>$PROJECT_DIR$/Server/target/Server</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <exploded>true</exploded>
+        <module>Server</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="ServerApi" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: org.json:json:20160212" />
+        </element>
+      </element>
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/ServerApi/target/Server/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="javaee-facet-resources" facet="ServerApi/web/Web" />
+    </root>
+  </artifact>
+</component>
