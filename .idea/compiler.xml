@@ -12,9 +12,9 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="ClientRunner" target="1.7" />
+      <module name="ClientRunner" target="14" />
       <module name="Docker_manager" target="11" />
-      <module name="ServerApi" target="1.7" />
+      <module name="ServerApi" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../Run-on-server-client-java/ClientRunner/ClientRunner.iml" filepath="$PROJECT_DIR$/../Run-on-server-client-java/ClientRunner/ClientRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/Docker_manager/Docker_manager.iml" filepath="$PROJECT_DIR$/Docker_manager/Docker_manager.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/Run-on-server.iml" filepath="$PROJECT_DIR$/.idea/Run-on-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/ServerApi/ServerApi.iml" filepath="$PROJECT_DIR$/ServerApi/ServerApi.iml" />
     </modules>
   </component>

@@ -15,7 +15,7 @@ public class mail_test {
         String to = "blomsterpotte1998@gmail.com";
 
         // Sender's email ID needs to be mentioned
-        String from = "noreply@localhost.com";
+        String from = "trygvejw@stud.ntnu.no";
 
         // Assuming you are sending email from localhost
         String host = "localhost";

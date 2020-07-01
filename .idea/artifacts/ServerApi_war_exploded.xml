@@ -35,6 +35,7 @@
           <element id="library" level="project" name="Maven: commons-codec:commons-codec:1.13" />
           <element id="library" level="project" name="Maven: org.apache.httpcomponents.client5:httpclient5-cache:5.0.1" />
           <element id="library" level="project" name="Maven: org.apache.httpcomponents.client5:httpclient5-fluent:5.0.1" />
+          <element id="library" level="project" name="Maven: org.mortbay.jetty:servlet-api:2.5-20081211" />
         </element>
       </element>
       <element id="directory" name="META-INF">

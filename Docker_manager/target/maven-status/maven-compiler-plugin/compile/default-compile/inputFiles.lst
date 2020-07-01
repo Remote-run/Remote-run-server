@@ -1,6 +1,5 @@
 /home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/sql/ManagerPsqlInterface.java
 /home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/sql/PsqlInterface.java
 /home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/DockerInterface/ImageBuilder.java
-/home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/enums/RunType.java
 /home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/App.java
 /home/trygve/Development/projects/Run-on-server/Docker_manager/src/main/java/no/ntnu/enums/TicketStatus.java
