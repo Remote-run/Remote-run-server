@@ -1,0 +1,15 @@
+#!/bin/bash
+
+docker image build /home/trygve/Development/projects/run_on_server_savedata/m2/ -f run.Dockerfile -t java_gpu_test
+
+docker run --gpus all -it --rm \
+-v /home/trygve/Development/projects/run_on_server_savedata/run/ticket_11:/app/ \
+-v /home/trygve/Development/projects/run_on_server_savedata/save/ticket_11:/save/ \
+--net=host \
+java_gpu_test:latest
+#--net=host \
+#/bin/bash
+
+#-v mavenPackages:/mvn-packages:ro \
+#
+#

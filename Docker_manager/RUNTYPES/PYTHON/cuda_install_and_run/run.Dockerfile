@@ -2,10 +2,15 @@
 # the out dir is mounted to /save
 #
 
-FROM cuda_openjdk:latest
+FROM tensorflow/tensorflow:latest-gpu
 
 WORKDIR /app/
 
-RUN mkdir -p /save_data
+RUN mkdir /app/save_data
 RUN ln -s save_data /save
-CMD mvn install && mvn package && mvn -e exec:java | tee /save/sdout
+
+RUN pip install tensorflow_datasets
+
+CMD python3 text_clasification.py
+
+

@@ -14,6 +14,7 @@ public class PsqlInterface {
 
 
     private static Connection tryConnectToDB(){
+        System.out.println("try connect to db");
         Connection connection = null;
         try{
             Class.forName("org.postgresql.Driver"); // i think this is to chek if the class exists

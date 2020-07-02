@@ -1,5 +1,8 @@
 FROM ubuntu:latest
 
+ENV SQLURL="jdbc:postgresql://localhost:54320/docker"
+ENV POSGRESS_USER="postgres"
+ENV POSGRESS_PASSWORD="mysecretpassword"
 
 RUN apt update
 RUN apt install -y curl

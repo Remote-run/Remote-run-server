@@ -2,6 +2,8 @@ package no.ntnu;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,7 +22,8 @@ import no.ntnu.util.Compression;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
+
 
 //@WebServlet(name="Api",urlPatterns={"/Api"})
 public class RemoteRunApiServlet extends HttpServlet {
@@ -36,8 +39,8 @@ public class RemoteRunApiServlet extends HttpServlet {
 
         if(person != null){
             String json = "{\n";
-            json += "\"name\": " + JSONObject.quote(person.getName()) + ",\n";
-            json += "\"about\": " + JSONObject.quote(person.getAbout()) + ",\n";
+            json += "\"name\": " + person.getName() + ",\n";
+            json += "\"about\": " + person.getAbout() + ",\n";
             json += "\"birthYear\": " + person.getBirthYear() + "\n";
             json += "}";
             response.getOutputStream().println(json);
@@ -85,27 +88,63 @@ public class RemoteRunApiServlet extends HttpServlet {
                         boolean isInMemory = item.isInMemory();
                         long sizeInBytes = item.getSize();
 
-                        File uploadedFile = new File("/tmp/test.gzip");
+                        File tmpdir = new File (System.getProperty("java.io.tmpdir"));
+
+                        File runDir = new File("/runvol");
+
+                        // todo this needs to be a uniq name for eatch run in case of mlti thrededness
+                        File uploadedFile = new File(tmpdir, "test.gzip");
+
                         item.write(uploadedFile);
                         System.out.println("write Ok");
-                        File outDir = new File("/runvol");
-                        Compression.unzip(uploadedFile);
+
+                        // todo remove
+                        uploadedFile.setReadable(true);
+
+                        System.out.println("1");
+                        File decompressedDir = new File(tmpdir, "test");
+                        System.out.println("2");
+                        decompressedDir.mkdir();
+                        System.out.println("3");
+                        Compression.unzip(uploadedFile, decompressedDir );
+                        System.out.println("4");
+                        System.out.println("decompress ok");
                         uploadedFile.delete();
-                        File runableDir = new File("/tmp/test").listFiles()[0];
-                        File configfile = runableDir.listFiles(pathname -> pathname.equals(ApiConfig.configFile))[0];
+
+
+                        File usedDir = decompressedDir.listFiles()[0];
+                        System.out.println("hcaky find ok");
+                        File configfile = usedDir.listFiles(pathname -> pathname.getName().equals(ApiConfig.configFile.getName()))[0];
+                        System.out.println("config found");
                         RunType rt = ApiConfig.getRunType(configfile);
                         if (rt == RunType.JAVA){
                             JavaApiConfig typeConfig = new JavaApiConfig(configfile);
                             int ticket_id = PsqlInterface.insertNewTicket(typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
-                            runableDir.renameTo(new File(outDir, "ticket_" + ticket_id));
+
+                            // TODO: This shold be changed but the ony oyher solution where ether windows trainwreks or 100 liners
+                            //usedDir.setWritable(true);
+                            //usedDir.setReadable(true);
+                            System.out.println(usedDir.exists());
+                            ProcessBuilder builder = new ProcessBuilder();
+                                    //String.format("/bin/mv %s %s", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath())
+                            //);
+                            builder.command("mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
+                            builder.start();
+                            //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
+
+
+                            System.out.println("saved at: " + new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
                         }
 
-                        System.out.println("decompress Ok");
+                        System.out.println("Full ok");
 
                     }
                 }
 
             }
-        } catch (Exception e) {e.printStackTrace();}
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

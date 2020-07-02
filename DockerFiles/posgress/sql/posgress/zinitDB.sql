@@ -1,5 +1,4 @@
 
-
 CREATE TYPE run_type AS ENUM ('JAVA', 'PYTHON');
 CREATE TYPE run_phase AS ENUM ('WAITING', 'RUNNING', 'STOPPED', 'DONE');
 
@@ -33,10 +32,6 @@ CREATE VIEW  running as
     FROM tickets
     WHERE status = 'RUNNING';
 
-CREATE VIEW  running as
-    SELECT id, status
-    FROM tickets
-    WHERE status = 'RUNNING';
 
 /*
     this is a table of whats currently running

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+docker image build . -f run.Dockerfile -t python_test
+
+docker run --gpus all -it --rm \
+-v /home/trygve/Development/projects/run_on_server_savedata/run/ticket_3:/app/ \
+-v /home/trygve/Development/projects/run_on_server_savedata/save/ticket_3:/save/ \
+python_test:latest
+#/bin/bash

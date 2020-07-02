@@ -1,6 +1,6 @@
 no/ntnu/enums/TicketStatus.class
 no/ntnu/sql/ManagerPsqlInterface.class
-no/ntnu/DockerInterface/ImageBuilder.class
 no/ntnu/sql/PsqlInterface.class
+no/ntnu/DockerInterface/ImageBuilder.class
 no/ntnu/sql/PsqlInterface$dbView.class
 no/ntnu/App.class

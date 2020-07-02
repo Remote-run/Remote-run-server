@@ -14,7 +14,7 @@
     <bytecodeTargetLevel>
       <module name="ClientRunner" target="14" />
       <module name="Docker_manager" target="11" />
-      <module name="ServerApi" target="1.8" />
+      <module name="ServerApi" target="14" />
     </bytecodeTargetLevel>
   </component>
 </project>
