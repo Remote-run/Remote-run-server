@@ -32,7 +32,7 @@ public class PsqlInterface {
         done,
     }
 
-    public static int insertNewTicket(RunType runType, String returnMail, int priority) throws SQLException {
+    public static boolean insertNewTicket(int id, RunType runType, String returnMail, int priority) throws SQLException {
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
@@ -50,6 +50,7 @@ public class PsqlInterface {
 
         return ticketId;
     }
+
 
     public static void updateTicketStatus(int ticketNmr, TicketStatus ticketStatus) throws SQLException {
         Connection connection = tryConnectToDB();

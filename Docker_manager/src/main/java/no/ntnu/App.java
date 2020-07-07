@@ -14,12 +14,22 @@ public class App
     public static void main( String[] args )
     {
         try {
-            Integer[] que = PsqlInterface.getSortedWaitingQue();
+            while (true){
+
+                Integer[] que = PsqlInterface.getSortedWaitingQue();
+
+                for (Integer i: que) {
+
+                }
 
 
+
+                Thread.sleep(1000);
+            }
         } catch (Exception e){
             e.printStackTrace();
         }
+
 
     }
 }

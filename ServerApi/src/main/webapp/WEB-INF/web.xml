@@ -22,7 +22,7 @@
 
 <servlet-mapping>
     <servlet-name>DownloadFileServlet</servlet-name>
-    <url-pattern>/no.ntnu.DownloadFileServlet</url-pattern>
+    <url-pattern>/download/*</url-pattern>
   </servlet-mapping>
 
 

@@ -8,7 +8,7 @@ CREATE TYPE run_phase AS ENUM ('WAITING', 'RUNNING', 'STOPPED', 'DONE');
 
 */
 CREATE TABLE IF NOT EXISTS tickets(
-    id           serial primary key  not null,
+    id           uuid primary key    not null,
     return_mail  text                not null,
 
     run_type     run_type,
