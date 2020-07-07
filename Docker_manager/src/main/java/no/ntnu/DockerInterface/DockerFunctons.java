@@ -2,10 +2,12 @@ package no.ntnu.DockerInterface;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,9 +49,9 @@ public class DockerFunctons {
 
     /**
      * Deletes any container or image to the provided ticket id
-     * @param TicketId the id of the ticket to clean
+     * @param ticketId the id of the ticket to clean
      */
-    public static void cleanTicket(int TicketId){
+    public static void cleanTicket(UUID ticketId){
         try {
             ProcessBuilder cleanImageBuilder = new ProcessBuilder(
                     String.format("docker image rm %s" , "ticket_" + ticketId)
@@ -66,5 +68,9 @@ public class DockerFunctons {
         } catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public static void buildImage(UUID ticketId, File buildDir, File dockerFile){
+
     }
 }

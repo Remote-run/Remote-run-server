@@ -1,5 +1,4 @@
 
-CREATE TYPE run_type AS ENUM ('JAVA', 'PYTHON');
 CREATE TYPE run_phase AS ENUM ('WAITING', 'RUNNING', 'STOPPED', 'DONE');
 
 
@@ -11,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tickets(
     id           uuid primary key    not null,
     return_mail  text                not null,
 
-    run_type     run_type,
+    run_type     text,
     run_priority int,
 
     timestamp     int DEFAULT extract(epoch from now()),
@@ -50,3 +49,4 @@ CREATE TABLE IF NOT EXISTS out(
     id         int references tickets(id) ON DELETE CASCADE,
     kill_at    int DEFAULT  extract(epoch from now() + interval '7 days')
 );
+

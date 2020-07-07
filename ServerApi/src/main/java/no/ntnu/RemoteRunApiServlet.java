@@ -3,10 +3,7 @@ package no.ntnu;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.zip.ZipException;
 
 import javax.servlet.ServletContext;
@@ -33,7 +30,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
     private final File tmpdir = new File (System.getProperty("java.io.tmpdir"));
     private final File runDir = new File("/runvol");
-    private final DebugLogger debugLogger = new DebugLogger(true);
+    private final DebugLogger dbl = new DebugLogger(true);
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
@@ -64,20 +61,20 @@ public class RemoteRunApiServlet extends HttpServlet {
                     FileItem item = iter.next();
 
                     if (!item.isFormField()) {
-                        // to ensure no name collisions if multithreaded
-                        String tmpId = java.util.UUID.randomUUID().toString();
-                        File uploadedFile = new File(tmpdir, tmpId + ".gz");
+                        UUID ticket_id = java.util.UUID.randomUUID();
+                        dbl.log(ticket_id,ticket_id.toString());
+                        File uploadedFile = new File(tmpdir, ticket_id.toString() + ".gz");
 
                         item.write(uploadedFile);
-                        debugLogger.log("write ok");
+                        dbl.log("write ok");
 
                         // todo remove
                         uploadedFile.setReadable(true);
 
-                        File decompressedDir = new File(tmpdir, tmpId);
+                        File decompressedDir = new File(tmpdir, ticket_id.toString());
                         decompressedDir.mkdir();
                         Compression.unzip(uploadedFile, decompressedDir );
-                        debugLogger.log("decompress ok");
+                        dbl.log("decompress ok");
 
 
                         File[] decompressedContents = decompressedDir.listFiles();
@@ -91,7 +88,7 @@ public class RemoteRunApiServlet extends HttpServlet {
                         }
 
                         File usedDir = decompressedContents[0];
-                        debugLogger.log("found inner dir");
+                        dbl.log("found inner dir");
 
                         File[] runContents = usedDir.listFiles();
                         if (runContents == null){
@@ -109,27 +106,26 @@ public class RemoteRunApiServlet extends HttpServlet {
                         }
 
                         File configFile = configFileOption.get();
-                        debugLogger.log("config found");
+                        dbl.log("config found");
 
 
                         // this should be extracted to another class
                         RunType rt = ApiConfig.getRunType(configFile);
                         if (rt == RunType.JAVA){
                             JavaApiConfig typeConfig = new JavaApiConfig(configFile);
-                            int ticket_id = PsqlInterface.insertNewTicket(typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
+                            PsqlInterface.insertNewTicket(ticket_id, typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
 
                             // this can't possibly be the best solution
-                            System.out.println(usedDir.exists());
                             ProcessBuilder builder = new ProcessBuilder();
                             builder.command("mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
                             builder.start();
 
 
                             //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
-                            System.out.println("saved at: " + new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
+                            dbl.log("saved at: ", new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
                         }
 
-                        System.out.println("Full ok");
+                        dbl.log("Full ok");
 
                         uploadedFile.delete();
                         decompressedDir.delete();

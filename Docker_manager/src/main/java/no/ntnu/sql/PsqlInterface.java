@@ -2,14 +2,18 @@ package no.ntnu.sql;
 
 import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
+import no.ntnu.util.DebugLogger;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.UUID;
 
 public class PsqlInterface {
     private static final String url = System.getenv("SQLURL");
     private static final String dbUser = System.getenv("POSGRESS_USER");
     private static final String dbPassword = System.getenv("POSGRESS_PASSWORD");
+
+    private static final DebugLogger dbl = new DebugLogger(true);
 
 
 
@@ -32,38 +36,35 @@ public class PsqlInterface {
         done,
     }
 
-    public static boolean insertNewTicket(int id, RunType runType, String returnMail, int priority) throws SQLException {
+    public static void insertNewTicket(UUID uid, RunType runType, String returnMail, int priority) throws SQLException {
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
-        String query = String.format("INSERT INTO tickets (return_mail,run_type,run_priority) "
-                + "VALUES ('%s', '%s', %o ) RETURNING id;", returnMail, runType.name(), priority);
-        System.out.println("making SQL query:\n" + query);
-        ResultSet resultSet = statement.executeQuery(query);
+        dbl.log(uid.toString(), "<- skal se ca slik ut : 0e37df36-f698-11e6-8dd4-cb9ced3df976");
 
-        resultSet.next();
-        int ticketId = resultSet.getInt("id");
+        String query = String.format("INSERT INTO tickets (id, return_mail,run_type,run_priority) "
+                + "VALUES ('%s', '%s', '%s', %o );", uid.toString(), returnMail, runType.name(), priority);
 
-        resultSet.close();
+        dbl.log("making SQL query:\n", query);
+        statement.executeUpdate(query);
+
         statement.close();
         connection.close();
-
-        return ticketId;
     }
 
 
-    public static void updateTicketStatus(int ticketNmr, TicketStatus ticketStatus) throws SQLException {
+    public static void updateTicketStatus(UUID ticketNmr, TicketStatus ticketStatus) throws SQLException {
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
-        String query = String.format("UPDATE tickets SET status = '%s' WHERE id=%o;", ticketStatus.name(), ticketNmr);
-        System.out.println("making SQL query:\n" + query);
+        String query = String.format("UPDATE tickets SET status = '%s' WHERE id=%s;", ticketStatus.name(), ticketNmr);
+        dbl.log("making SQL query:\n", query);
         statement.executeUpdate(query);
 
         if (ticketStatus == TicketStatus.DONE){
             // the ticket is completed and is moved to the kill list
-            String killQuery = String.format("INSERT INTO out (id) VALUES (%o );", ticketNmr);
-            System.out.println("making SQL query:\n" + killQuery);
+            String killQuery = String.format("INSERT INTO out (id) VALUES (%s );", ticketNmr);
+            dbl.log("making SQL query:\n", query);
             statement.executeUpdate(killQuery);
         }
 
@@ -72,20 +73,22 @@ public class PsqlInterface {
 
     }
 
-    public static void cleanTicket() throws SQLException {
+    public static void cleanTicket(UUID ticketNmr) throws SQLException {
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
-
+        String query = String.format("DELETE FROM out WHERE id='%s';", ticketNmr);
+        dbl.log("making SQL query:\n", query);
+        statement.executeUpdate(query);
 
         statement.close();
         connection.close();
-
     }
 
     public static Integer[] getSortedWaitingQue() throws SQLException {
         return getViewIdCol(dbView.priority_run_que);
     }
+
     public static Integer[] getRunning() throws SQLException {
         return getViewIdCol(dbView.running);
     }

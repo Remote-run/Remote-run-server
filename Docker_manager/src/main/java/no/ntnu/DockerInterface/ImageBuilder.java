@@ -2,10 +2,11 @@ package no.ntnu.DockerInterface;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
 public class ImageBuilder {
 
-    public static boolean javaTicketBuild(int ticketId, File buildTargetDir) throws IOException {
+    public static boolean javaTicketBuild(UUID ticketId, File buildTargetDir) throws IOException {
 
         boolean suc = true;
         try {
@@ -24,7 +25,7 @@ public class ImageBuilder {
 
     }
 
-    public static Process javaTicketStart(int ticketId){
+    public static Process javaTicketStart(UUID ticketId){
 
         Process process = null;
         try {

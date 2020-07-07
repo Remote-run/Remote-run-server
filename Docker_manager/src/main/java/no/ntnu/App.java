@@ -13,8 +13,13 @@ public class App
 {
     public static void main( String[] args )
     {
+        //
+        //  HUSK OG HANDLE TING SOM STåR SOM RUNNING VED POWERON
+        //
         try {
             while (true){
+
+
 
                 Integer[] que = PsqlInterface.getSortedWaitingQue();
 

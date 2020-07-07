@@ -1,11 +1,27 @@
-package no.ntnu.DockerInterface;
+package no.ntnu.ticket;
+
+import no.ntnu.DockerInterface.DockerFunctons;
+import no.ntnu.DockerInterface.DockerRunCommand;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.UUID;
 
-public class JavaTicket {
+public class JavaTicket extends Ticket {
 
-    public static boolean javaTicketBuild(int ticketId, File buildTargetDir) throws IOException {
+    private DockerRunCommand runCommand;
+
+    protected JavaTicket(UUID ticketId, int gpu) {
+        super(ticketId);
+        String ticketName = "ticket_" + ticketId;
+
+        // TODO: Chek whether or not to have these on a network mtp segmentation
+        runCommand = new DockerRunCommand(ticketName, ticketName, gpu, "host" );
+
+    }
+
+
+    public static boolean javaTicketBuild(UUID ticketId, File buildTargetDir) throws IOException {
 
         boolean suc = true;
         try {
@@ -24,7 +40,7 @@ public class JavaTicket {
 
     }
 
-    public static Process javaTicketStart(int ticketId){
+    public static Process javaTicketStart(UUID ticketId){
 
         Process process = null;
         try {
@@ -47,4 +63,13 @@ public class JavaTicket {
         return process;
     }
 
+    @Override
+    protected DockerRunCommand getStartCommand() {
+        return runCommand;
+    }
+
+    @Override
+    protected void build() {
+
+    }
 }

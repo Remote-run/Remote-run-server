@@ -2,6 +2,9 @@ package no.ntnu.DockerInterface;
 
 import java.lang.management.BufferPoolMXBean;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class DockerRunCommand {
@@ -10,8 +13,13 @@ public class DockerRunCommand {
     private int gpu = 0;
     private String image;
     private String containerName;
+    private String network;
 
-    private Function<Process,Void> onComplete;
+    private Runnable onComplete;
+
+    public void setOnComplete(Runnable onComplete) {
+        this.onComplete = onComplete;
+    }
 
     public void addVolume(String from, String to){
         volumes.put(from, to);
@@ -34,11 +42,11 @@ public class DockerRunCommand {
     }
 
 
-    public DockerRunCommand(String image, String containerName, int gpu, Function<Process, Void> onComplete) {
+    public DockerRunCommand(String image, String containerName, int gpu, String network) {
         this.image = image;
         this.containerName = containerName;
         this.gpu = gpu;
-        this.onComplete = onComplete;
+        this.network = network;
     }
 
     private ArrayList<String> buildCommand(){
@@ -61,6 +69,11 @@ public class DockerRunCommand {
                 commandParts.add("--gpus " + this.gpu);
         }
 
+        // network
+        if (network != null){
+            commandParts.add("--net=" + this.network);
+        }
+
         // volumes
         for (Map.Entry volume:this.volumes.entrySet()){
             commandParts.add(String.format("-v %s:%s", volume.getKey(),volume.getValue()));
@@ -78,7 +91,7 @@ public class DockerRunCommand {
             //TODO: maby have a place to save the erro logs from here
             process = builder.start();
 
-            process.onExit().thenApply(this.onComplete);
+            process.onExit().thenRun(this.onComplete);
         } catch (Exception e){
             e.printStackTrace();
         }

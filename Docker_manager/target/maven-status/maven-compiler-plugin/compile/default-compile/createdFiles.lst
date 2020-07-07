@@ -1,6 +1,10 @@
 no/ntnu/enums/TicketStatus.class
+no/ntnu/DockerInterface/DockerFunctons.class
 no/ntnu/sql/ManagerPsqlInterface.class
-no/ntnu/sql/PsqlInterface.class
 no/ntnu/DockerInterface/ImageBuilder.class
 no/ntnu/sql/PsqlInterface$dbView.class
+no/ntnu/ticket/Ticket.class
+no/ntnu/sql/PsqlInterface.class
+no/ntnu/DockerInterface/DockerRunCommand.class
 no/ntnu/App.class
+no/ntnu/DockerInterface/JavaTicket.class

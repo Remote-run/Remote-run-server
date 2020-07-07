@@ -6,4 +6,4 @@ FROM cuda_openjdk:latest
 
 WORKDIR /app/
 
-CMD mvn install & mvn dependency:sources & mvn dependency:resolve-plugins
+CMD mvn dependency:sources & mvn dependency:resolve-plugins

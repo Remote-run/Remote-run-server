@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
@@ -19,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 //@WebServlet(name="download",urlPatterns={"/download"})
 public class DownloadFileServlet extends HttpServlet {
 
-    private DebugLogger dbp = new DebugLogger(true);
+    private DebugLogger dbl = new DebugLogger(true);
 
 
 
@@ -27,16 +28,16 @@ public class DownloadFileServlet extends HttpServlet {
     public void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
         File sendDir = new File(System.getenv("SEND_DIR"));
-        dbp.fileLog(sendDir);
+        dbl.fileLog(sendDir);
 
 
-        dbp.log(sendDir.listFiles());
+        dbl.log(sendDir.listFiles());
         Stream<File> sendDirContents = Arrays.stream(Objects.requireNonNull(sendDir.listFiles()));
         String downloadId = request.getRequestURI().replace("/download/", ""); //request.getHeader("ticket-id");
 
-        dbp.log("URI:", downloadId);
+        dbl.log("URI:", downloadId);
 
-        dbp.log();
+        dbl.log();
 
         if (sendDirContents.anyMatch(file -> file.getName().equals(downloadId))){
             File downloadFile = new File(sendDir, downloadId);
@@ -51,7 +52,7 @@ public class DownloadFileServlet extends HttpServlet {
                 // set to binary type if MIME mapping not found
                 mimeType = "application/octet-stream";
             }
-            dbp.log("MIME type: " + mimeType);
+            dbl.log("MIME type: " + mimeType);
 
             // modifies response
             response.setContentType(mimeType);
