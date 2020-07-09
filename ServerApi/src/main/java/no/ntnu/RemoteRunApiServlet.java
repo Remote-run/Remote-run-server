@@ -62,14 +62,13 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                     if (!item.isFormField()) {
                         UUID ticket_id = java.util.UUID.randomUUID();
-                        dbl.log(ticket_id,ticket_id.toString());
                         File uploadedFile = new File(tmpdir, ticket_id.toString() + ".gz");
 
                         item.write(uploadedFile);
                         dbl.log("write ok");
 
                         // todo remove
-                        uploadedFile.setReadable(true);
+                        //uploadedFile.setReadable(true);
 
                         File decompressedDir = new File(tmpdir, ticket_id.toString());
                         decompressedDir.mkdir();
@@ -117,7 +116,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                             // this can't possibly be the best solution
                             ProcessBuilder builder = new ProcessBuilder();
-                            builder.command("mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
+                            builder.command("bash", "-c","mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
                             builder.start();
 
 

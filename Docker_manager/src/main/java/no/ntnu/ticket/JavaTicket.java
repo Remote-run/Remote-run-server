@@ -1,67 +1,56 @@
 package no.ntnu.ticket;
 
 import no.ntnu.DockerInterface.DockerFunctons;
+import no.ntnu.DockerInterface.DockerImageBuildCommand;
 import no.ntnu.DockerInterface.DockerRunCommand;
+import no.ntnu.DockerManager;
+import no.ntnu.config.ApiConfig;
+import no.ntnu.config.JavaApiConfig;
+import no.ntnu.enums.TicketStatus;
+import no.ntnu.sql.PsqlInterface;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 public class JavaTicket extends Ticket {
 
-    private DockerRunCommand runCommand;
+    private        final File javaDockerFile = new File(DockerManager.dckerfilesDir, "JAVA/maven_ticket_run/Dockerfile");
+    private static final File m2RepoDir      = new File("/save_data/m2/repository");
 
-    protected JavaTicket(UUID ticketId, int gpu) {
+    private DockerRunCommand runCommand;
+    private JavaApiConfig ticketConfig;
+
+    public JavaTicket(UUID ticketId, int gpu) {
         super(ticketId);
-        String ticketName = "ticket_" + ticketId;
 
         // TODO: Chek whether or not to have these on a network mtp segmentation
-        runCommand = new DockerRunCommand(ticketName, ticketName, gpu, "host" );
+        runCommand = new DockerRunCommand(super.commonName, super.commonName, gpu, "host" );
+        ticketConfig = new JavaApiConfig();
+
 
     }
 
+    /**
+     * Runs the maven install container for this ticket, this installs all the maven deps to the shared volume.
+     * the current thread will wait for the process to complete
+     *
+     * The method is synchronized to avoid multiple maven instances installing at the same time
+     */
+    private static synchronized void installMavenDeps(String commonName, File runDir){
+        String containerName = commonName + "builder";
+        DockerRunCommand installCmd = new DockerRunCommand(
+                "maven_install_image:latest", containerName, 0, "host");
 
-    public static boolean javaTicketBuild(UUID ticketId, File buildTargetDir) throws IOException {
+        installCmd.addVolume(JavaTicket.m2RepoDir.getAbsolutePath(),"/root/.m2/repository");
+        installCmd.addVolume(runDir.getAbsolutePath(), "/app/");
 
-        boolean suc = true;
-        try {
-            ProcessBuilder builder = new ProcessBuilder(
-                    String.format("docker image build %s -t %s", buildTargetDir.getCanonicalPath(), "ticket_" + ticketId)
-            );
+        // block the thread so the run image is not built before the install image is done
+        installCmd.setBlocking(true);
+        installCmd.run();
 
-            //TODO: maby have a place to save the erro logs from here
-            Process process = builder.start();
-            process.waitFor();
-        } catch (Exception e){
-            e.printStackTrace();
-            suc = false;
-        }
-        return suc;
-
+        DockerFunctons.removeContainer(containerName);
     }
 
-    public static Process javaTicketStart(UUID ticketId){
-
-        Process process = null;
-        try {
-            ProcessBuilder builder = new ProcessBuilder(
-                    // TODO: maby remove -it this wold detatch the process. making peaking at the process objet not possible
-                    //          for determening if the session is done
-                    String.format("docker run --gpus 1 --rm -it " +
-                            " -v run_data_volume/%s:/app " +
-                            " -v save_data_volume/%s:/save " +
-                            " -v mavenPackages:/root/.m2/repository " +
-                            " java_gpu_test:latest", "ticket_" + ticketId, "ticket_" + ticketId)
-            );
-
-            //TODO: maby have a place to save the erro logs from here
-            process = builder.start();
-
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        return process;
-    }
 
     @Override
     protected DockerRunCommand getStartCommand() {
@@ -69,7 +58,18 @@ public class JavaTicket extends Ticket {
     }
 
     @Override
-    protected void build() {
+    protected ApiConfig getTicketConfig() {
+        return null;
+    }
 
+    @Override
+    public void buildRunTypeTicket() {
+        try {
+            JavaTicket.installMavenDeps(super.commonName, super.runDir);
+
+            DockerFunctons.buildTicketImage(super.ticketId, super.runDir, this.javaDockerFile);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

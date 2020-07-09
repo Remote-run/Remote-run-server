@@ -7,19 +7,13 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DockerRunCommand {
+public class DockerRunCommand extends DockerCommand {
 
     private HashMap<String,String> volumes = new HashMap<>();
     private int gpu = 0;
     private String image;
     private String containerName;
     private String network;
-
-    private Runnable onComplete;
-
-    public void setOnComplete(Runnable onComplete) {
-        this.onComplete = onComplete;
-    }
 
     public void addVolume(String from, String to){
         volumes.put(from, to);
@@ -49,10 +43,12 @@ public class DockerRunCommand {
         this.network = network;
     }
 
-    private ArrayList<String> buildCommand(){
+
+    protected ArrayList<String> buildCommand(){
         ArrayList<String> commandParts = new ArrayList<>();
 
-        commandParts.add("docker image run");
+        commandParts.add("docker");
+        commandParts.add("image run");
         commandParts.add("--rm");
         //commandParts.add("-it");
 
@@ -84,17 +80,5 @@ public class DockerRunCommand {
         return commandParts;
     }
 
-    public void run(){
-        ProcessBuilder builder = new ProcessBuilder(this.buildCommand());
-        Process process = null;
-        try {
-            //TODO: maby have a place to save the erro logs from here
-            process = builder.start();
 
-            process.onExit().thenRun(this.onComplete);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-    }
 }

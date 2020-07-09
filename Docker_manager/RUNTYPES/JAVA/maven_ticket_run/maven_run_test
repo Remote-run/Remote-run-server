@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker image build /home/trygve/Development/projects/run_on_server_savedata/m2/ -f run.Dockerfile -t java_gpu_test
+docker image build /home/trygve/Development/projects/run_on_server_savedata/m2/ -f Dockerfile -t java_gpu_test
 
 docker run --gpus all -it --rm \
 -v /home/trygve/Development/projects/run_on_server_savedata/run/ticket_11:/app/ \

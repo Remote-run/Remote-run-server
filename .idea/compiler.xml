@@ -13,7 +13,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="ClientRunner" target="14" />
-      <module name="Docker_manager" target="11" />
+      <module name="Docker_manager" target="14" />
       <module name="ServerApi" target="14" />
     </bytecodeTargetLevel>
   </component>

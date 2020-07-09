@@ -1,7 +1,7 @@
 FROM tomcat:jdk14-openjdk-oracle
 
 ENV SQLURL="jdbc:postgresql://localhost:54320/docker"
-ENV POSGRESS_USER="postgres"
+ENV POSGRESS_USER="docker"
 ENV POSGRESS_PASSWORD="mysecretpassword"
 
 ENV SAVE_DIR="/save"

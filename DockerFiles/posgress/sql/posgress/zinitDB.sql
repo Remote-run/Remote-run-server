@@ -1,7 +1,4 @@
 
-CREATE TYPE run_phase AS ENUM ('WAITING', 'RUNNING', 'STOPPED', 'DONE');
-
-
 /*
     when a request comes in, the config is parsed and the request is places in this table,
 
@@ -14,7 +11,7 @@ CREATE TABLE IF NOT EXISTS tickets(
     run_priority int,
 
     timestamp     int DEFAULT extract(epoch from now()),
-    status        run_phase DEFAULT ('WAITING')
+    status        text DEFAULT ('WAITING')
 );
 
 /*
@@ -46,7 +43,7 @@ CREATE TABLE active(
 
  */
 CREATE TABLE IF NOT EXISTS out(
-    id         int references tickets(id) ON DELETE CASCADE,
+    id         uuid references tickets(id) ON DELETE CASCADE,
     kill_at    int DEFAULT  extract(epoch from now() + interval '7 days')
 );
 

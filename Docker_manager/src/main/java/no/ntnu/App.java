@@ -1,40 +1,25 @@
 package no.ntnu;
 
 import no.ntnu.DockerInterface.ImageBuilder;
+import no.ntnu.config.ApiConfig;
+import no.ntnu.enums.RunType;
+import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.PsqlInterface;
+import no.ntnu.ticket.JavaTicket;
+import no.ntnu.ticket.Ticket;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.UUID;
 
 /**
  * Hello world!
  *
  */
-public class App 
-{
-    public static void main( String[] args )
-    {
-        //
-        //  HUSK OG HANDLE TING SOM STåR SOM RUNNING VED POWERON
-        //
-        try {
-            while (true){
+public class App {
 
 
 
-                Integer[] que = PsqlInterface.getSortedWaitingQue();
-
-                for (Integer i: que) {
-
-                }
-
-
-
-                Thread.sleep(1000);
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-
-
-    }
 }

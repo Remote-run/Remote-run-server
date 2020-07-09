@@ -1,11 +1,11 @@
 #!/bin/bash
 pwd
-docker image build . -f ./install.Dockerfile -t java_gpu_test
+docker image build . -f ./install.Dockerfile -t maven_install_image
 
 docker run --gpus all -it --rm \
 -v /home/trygve/Development/projects/run_on_server_savedata/run/ticket_11:/app/ \
 -v /home/trygve/Development/projects/run_on_server_savedata/m2/repository:/root/.m2/repository \
 --net=host \
-java_gpu_test:latest
+maven_install_image:latest
 
 #--net=host \
