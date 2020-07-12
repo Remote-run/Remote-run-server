@@ -9,6 +9,8 @@ public enum TicketStatus {
      */
     WAITING,
 
+    INSTALLING,
+
     /**
      * The ticket has been built and is ready to be run
      */
@@ -30,5 +32,5 @@ public enum TicketStatus {
     /**
      * Some error has occurred. The error wil be sent and the ticket wil be discarded
      */
-    BROKEN
+    VOIDED
 }

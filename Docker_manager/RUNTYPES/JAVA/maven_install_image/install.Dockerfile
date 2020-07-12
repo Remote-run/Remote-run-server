@@ -7,3 +7,4 @@ FROM cuda_openjdk:latest
 WORKDIR /app/
 
 CMD mvn dependency:sources & mvn dependency:resolve-plugins
+# pwd && ls -alh /app

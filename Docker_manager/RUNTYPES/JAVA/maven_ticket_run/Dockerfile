@@ -8,8 +8,8 @@ WORKDIR /app/
 
 RUN mkdir /app/save_data
 RUN ln -s save_data /save
-COPY /m2/repository /root/.m2/repository
+COPY ./java/m2_repo /root/.m2/repository
 
-CMD mvn -e exec:java | tee save_data/sdout
+CMD mvn -e exec:java | tee /save/sdout
 
 

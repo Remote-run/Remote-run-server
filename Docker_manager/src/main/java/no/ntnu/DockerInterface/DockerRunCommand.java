@@ -48,7 +48,7 @@ public class DockerRunCommand extends DockerCommand {
         ArrayList<String> commandParts = new ArrayList<>();
 
         commandParts.add("docker");
-        commandParts.add("image run");
+        commandParts.add("container run");
         commandParts.add("--rm");
         //commandParts.add("-it");
 

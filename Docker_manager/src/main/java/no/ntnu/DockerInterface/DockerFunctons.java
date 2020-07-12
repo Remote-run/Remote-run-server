@@ -6,16 +6,9 @@ import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
 
 import java.io.*;
-import java.nio.file.FileSystemException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 
 /**
@@ -68,49 +61,6 @@ import java.util.stream.Stream;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public class DockerFunctons {
 
     private static DebugLogger dbl = new DebugLogger(true);
@@ -125,44 +75,26 @@ public class DockerFunctons {
         );
 
         command.setBlocking(true);
+        command.setKeepOutput(true);
         Process process = command.run();
 
 
         try {
-            /*System.out.println("DEBUG PROCESS ---------aaa");;
-            BufferedReader ok = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            BufferedReader er = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-
-            String l = null;
-            while ((l = ok.readLine()) != null){
-                System.out.println(l);
-            }
-
-            l = null;
-            while ((l = er.readLine()) != null){
-                System.out.println(l);
-            }
-            System.out.println("DEBUG PROCESS ---------");;*/
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-            BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            process.waitFor();
 
-            String line = null;
+            String line;
             while ((line = bufferedReader.readLine()) != null){
                 if (line.startsWith(Ticket.commonPrefix)){
-                    idList.add(UUID.fromString(line.strip()));
+                    idList.add(UUID.fromString(line.replaceFirst(Ticket.commonPrefix,"")));
                 }
             }
-
-            err.close();
-
+            bufferedReader.close();
 
         } catch (Exception e){
             e.printStackTrace();
         }
 
-        dbl.log(idList);
         return idList.toArray(UUID[]::new);
 
     }
@@ -178,6 +110,7 @@ public class DockerFunctons {
         );
 
         command.setBlocking(true);
+        command.setKeepOutput(true);
         Process process = command.run();
 
         try {
@@ -231,7 +164,6 @@ public class DockerFunctons {
         //dbl.fileLog(buildDir);
         //dbl.fileLog(dockerFile);
         DockerImageBuildCommand command = new DockerImageBuildCommand(ticketId, buildDir, dockerFile);
-        command.dumpIO = true;
         command.setOnComplete((process, throwable) -> {
             if (throwable == null && process != null){
                 dbl.log("check that is zero at normal term ->", process.exitValue());

@@ -1,10 +1,13 @@
 no/ntnu/DockerInterface/DockerFunctons.class
 no/ntnu/DockerInterface/DockerGenericCommand.class
 no/ntnu/DockerManager.class
+no/ntnu/exeptions/TicketErrorException.class
 no/ntnu/DockerInterface/DockerCommand.class
 no/ntnu/DockerInterface/ImageBuilder.class
 no/ntnu/sql/PsqlInterface.class
+no/ntnu/ticket/TicketDoneMail.class
 no/ntnu/startup/BuildContainers.class
+no/ntnu/ticket/Ticket$1.class
 no/ntnu/DockerManager$1.class
 no/ntnu/enums/TicketStatus.class
 no/ntnu/startup/InitContainers.class

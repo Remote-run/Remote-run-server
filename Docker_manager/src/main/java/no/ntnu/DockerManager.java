@@ -7,17 +7,12 @@ import no.ntnu.sql.PsqlInterface;
 import no.ntnu.ticket.JavaTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
-import org.json.simple.parser.ParseException;
 
-import javax.imageio.IIOException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.rmi.server.UID;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -27,13 +22,56 @@ import java.util.stream.Stream;
 
 public class DockerManager {
 
-    private final DebugLogger dbl = new DebugLogger(true);
+    /**
+     *
+     * TODO:
+     *      - the INSTALLING ticket have to be flushed on porerup
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     *
+     */
+
+    private static final DebugLogger dbl = new DebugLogger(true);
+
+    public static final File systemSaveDataDir = new File(System.getenv("SAVE_DATA_SYS_PATH"));
 
     public static final File dckerfilesDir = new File("/runtypes");
     public static final File saveDataDir   = new File("/save_data");
     public static final File runDir        = new File(saveDataDir, "run");
     public static final File saveDir       = new File(saveDataDir, "save");
-    public static final File sendDir       = new File( "/send");
+    public static final File logDir        = new File(saveDataDir, "logs");
+    public static final File buildHelpers  = new File(saveDataDir, "buildHelpers");
+
+    // docker volume not a dir
+    public static final File sendDir       = new File("send");
+
+    public static File translateSaveDataFileToHostFile(File file){
+        dbl.log("in path", file);
+        String fp = file.getAbsolutePath().replaceFirst(saveDataDir.getAbsolutePath(),"");
+        File osPath = new File(systemSaveDataDir, fp);
+
+        dbl.log("out path", osPath);
+        return osPath;
+    }
+
+
+    public DockerManager(){
+
+
+        runDir.mkdir();
+        saveDir.mkdir();
+        logDir.mkdir();
+        buildHelpers.mkdir();
+        sendDir.mkdir();
+    }
 
 
     /**
@@ -45,7 +83,7 @@ public class DockerManager {
     /**
      * How many ticket can run simultaniosly. this wil be removed and changed for a recource manager at some point
      */
-    private final int runSlots = 4;
+    private final int runSlots = 1;
 
     private ArrayList<Ticket> backlog = new ArrayList<>();
     private ArrayList<Ticket> running = new ArrayList<>();
@@ -53,7 +91,7 @@ public class DockerManager {
     public void mainLoop(){
         while (true){
             try {
-                this.updateCompleted();
+                this.pruneTickets();
                 this.updateQue();
                 this.updateRunning();
 
@@ -72,10 +110,21 @@ public class DockerManager {
         }
     }
 
-    private void updateCompleted() throws SQLException {
-        this.running.stream()
+    private void pruneTickets() throws SQLException {
+        // removes any ticket that are ether done or voided
+        this.running.removeAll(this.running.stream()
                 .filter(Ticket::isDone)
-                .forEach(ticket -> this.running.remove(ticket));
+                .collect(Collectors.toCollection(ArrayList::new)));
+        System.out.println(this.running.stream()
+                .map(Ticket::isDone)
+                .collect(Collectors.toCollection(ArrayList<Boolean>::new)).toString());
+
+        // if a ticket was voided on install it is removed here
+        this.backlog.removeAll(this.running.stream()
+                .filter(Ticket::isDone)
+                .collect(Collectors.toCollection(ArrayList::new)));
+
+
 
         // this should tecnicly never be nececery
 
@@ -103,17 +152,34 @@ public class DockerManager {
     private void updateQue()throws SQLException{
         if (this.backlog.size() < this.queSize){
             UUID[] sortedQue = PsqlInterface.getTicketsByPriority();
+            dbl.log("backlog: ", backlog.toString());
+            dbl.log("running: ", running.toString());
 
             for (UUID id: sortedQue){
-                if (this.backlog.size() < this.queSize){
+                if (this.backlog.size() < this.queSize && id != null){
+                    if (Stream.of(backlog, running)
+                            .flatMap(tickets -> tickets.stream().map(Ticket::getTicketId))
+                            .noneMatch(id::equals)){
+                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                        dbl.log("backlog: ", backlog.toString());
+                        dbl.log("running: ", running.toString());
+                        dbl.log(id);
+                        this.addToBacklog(id);
+                    }
+
+                }
+                /*backlog.stream().noneMatch(ticket -> ticket.getTicketId().equals(id))
+                running.stream().noneMatch(ticket -> ticket.getTicketId().equals(id))){
+                    System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                    dbl.log("all ids", backlog.toString());
+                    dbl.log("all ids", running.toString());
+                    dbl.log(id);
                     this.addToBacklog(id);
-                } else {
+                } */else {
                     break;
                 }
             }
         }
-
-
     }
 
     //remove if nothing more is added fluff is unececery
@@ -135,6 +201,7 @@ public class DockerManager {
 
 
     private Ticket getTicket(UUID ticketID){
+        dbl.log("TRY ADD TICKET\n\n");
         Ticket ticket = null;
 
         try {
@@ -142,20 +209,18 @@ public class DockerManager {
             File ticketRunDir = new File(runDir, Ticket.commonPrefix + ticketID);
             RunType runType = ApiConfig.getRunType(new File(ticketRunDir, ApiConfig.commonConfigName));
 
-            switch (runType){
-                case JAVA:
-                    // TODO: fix the where to set gpu amount mess
-                    ticket = new JavaTicket(ticketID, 1);
-                    break;
-                case PYTHON:
-
-                    break;
-            }
+            ticket = switch (runType){
+                case JAVA -> new JavaTicket(ticketID, 1);
+                case PYTHON -> null;
+                default -> null;
+            };
 
 
         } catch (Exception e){
             e.printStackTrace();
         }
+
+        dbl.log("TICKET ADD OK\n\n");
         return ticket;
 
 

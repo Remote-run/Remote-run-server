@@ -1,5 +1,7 @@
-package no.ntnu;
+package no.ntnu.ticket;
 
+import no.ntnu.enums.TicketStatus;
+import no.ntnu.ticket.Ticket;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -7,18 +9,16 @@ import javax.mail.internet.MimeMessage;
 import java.util.Properties;
 import java.util.UUID;
 
-public class mail_test {
+public class TicketDoneMail {
 
-    public static void test(){
-        // Recipient's email ID needs to be mentioned.
-        String to = "blomsterpotte1998@gmail.com";
+    public static void sendMail(String to, Ticket ticket){
+        String dlLink = "localhost:8080/download/" + ticket.getCommonName();
 
         // Sender's email ID needs to be mentioned
-        String from = "trygvejw@stud.ntnu.no";
+        String from = "noreply@edu.com.io.hvasomhelst";
 
         // Assuming you are sending email from localhost
-        String host = "localhost:25";
-        //172.17.0.3
+        String host = "172.17.0.3";
 
         // Get system properties
         Properties properties = System.getProperties();
@@ -38,23 +38,21 @@ public class mail_test {
 
             // Set To: header field of the header.
             message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
+            if (ticket.getState().equals(TicketStatus.VOIDED)){
+                message.setSubject("Your run crashed");
 
-            // Set Subject: header field
-            message.setSubject("This is the Subject Line!");
+                message.setText("To recive the pices (if any) click here:\n" + dlLink);
+            } else {
+                message.setSubject("Your run is done");
 
-            // Now set the actual message
-            message.setText("This is actual message");
+                message.setText("To recive the stuff:\n" + dlLink);
+            }
 
-            // Send message
+
             Transport.send(message);
             System.out.println("Sent message successfully....");
         } catch (MessagingException mex) {
             mex.printStackTrace();
         }
     }
-
-    public static void main(String[] args) {
-        test();
-    }
-
 }

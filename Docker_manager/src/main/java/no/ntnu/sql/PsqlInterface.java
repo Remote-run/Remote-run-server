@@ -60,23 +60,28 @@ public class PsqlInterface {
     }
 
 
-    public static void updateTicketStatus(UUID ticketNmr, TicketStatus ticketStatus) throws SQLException {
-        Connection connection = tryConnectToDB();
-        Statement statement = connection.createStatement();
+    public static void updateTicketStatus(UUID ticketNmr, TicketStatus ticketStatus) {
+        try{
+            Connection connection = tryConnectToDB();
+            Statement statement = connection.createStatement();
 
-        String query = String.format("UPDATE tickets SET status = '%s' WHERE id='%s';", ticketStatus.name(), ticketNmr);
-        dbl.log("making SQL query:\n", query);
-        statement.executeUpdate(query);
-
-        if (ticketStatus == TicketStatus.DONE){
-            // the ticket is completed and is moved to the kill list
-            String killQuery = String.format("INSERT INTO out (id) VALUES (%s);", ticketNmr);
+            String query = String.format("UPDATE tickets SET status = '%s' WHERE id='%s';", ticketStatus.name(), ticketNmr);
             dbl.log("making SQL query:\n", query);
-            statement.executeUpdate(killQuery);
+            statement.executeUpdate(query);
+
+            if (ticketStatus == TicketStatus.DONE){
+                // the ticket is completed and is moved to the kill list
+                String killQuery = String.format("INSERT INTO out (id) VALUES ('%s');", ticketNmr);
+                dbl.log("making SQL query:\n", query);
+                statement.executeUpdate(killQuery);
+            }
+
+            statement.close();
+            connection.close();
+        } catch (SQLException e){
+            e.printStackTrace();
         }
 
-        statement.close();
-        connection.close();
 
     }
 
@@ -90,6 +95,30 @@ public class PsqlInterface {
 
         statement.close();
         connection.close();
+    }
+
+    public static TicketStatus getTicketStatus(UUID ticketId) throws SQLException{
+        Connection connection = tryConnectToDB();
+        Statement statement = connection.createStatement();
+
+        String query = String.format("SELECT status FROM tickets WHERE id = '%s'", ticketId.toString());
+        ResultSet resultSet = statement.executeQuery(query);
+        resultSet.next();
+
+        String statusStr = resultSet.getString("status");
+        TicketStatus ticketStatus = null;
+
+        try {
+            ticketStatus = TicketStatus.valueOf(statusStr);
+        } catch (IllegalArgumentException e){}
+
+
+        resultSet.close();
+        statement.close();
+        connection.close();
+
+        return ticketStatus;
+
     }
 
 
@@ -141,7 +170,7 @@ public class PsqlInterface {
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
-        String query = "SELECT id FROM tickets ORDER BY run_priority ,timestamp;";
+        String query = "SELECT id FROM tickets WHERE status = 'WAITING' ORDER BY run_priority ,timestamp ;";
         ResultSet resultSet = statement.executeQuery(query);
 
         ArrayList<UUID> tmpList = new ArrayList<>();

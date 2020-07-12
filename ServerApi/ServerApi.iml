@@ -34,6 +34,7 @@
     <orderEntry type="library" name="Maven: org.apache.tomcat:tomcat-annotations-api:9.0.36" level="project" />
     <orderEntry type="library" name="Maven: org.apache.geronimo.specs:geronimo-javamail_1.4_spec:1.7.1" level="project" />
     <orderEntry type="library" name="Maven: javax.activation:activation:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: javax.mail:mail:1.4.7" level="project" />
     <orderEntry type="library" name="Maven: org.mortbay.jetty:servlet-api:2.5-20081211" level="project" />
     <orderEntry type="module" module-name="ClientRunner" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents.client5:httpclient5:5.0.1" level="project" />

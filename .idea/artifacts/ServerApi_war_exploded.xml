@@ -21,6 +21,7 @@
           <element id="library" level="project" name="Maven: org.apache.tomcat:tomcat-annotations-api:9.0.36" />
           <element id="library" level="project" name="Maven: org.apache.geronimo.specs:geronimo-javamail_1.4_spec:1.7.1" />
           <element id="library" level="project" name="Maven: javax.activation:activation:1.1.1" />
+          <element id="library" level="project" name="Maven: javax.mail:mail:1.4.7" />
           <element id="library" level="project" name="Maven: org.mortbay.jetty:servlet-api:2.5-20081211" />
           <element id="archive" name="ClientRunner-1.0-SNAPSHOT.jar">
             <element id="module-output" name="ClientRunner" />

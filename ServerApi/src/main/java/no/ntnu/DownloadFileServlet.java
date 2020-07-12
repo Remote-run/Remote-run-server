@@ -31,9 +31,8 @@ public class DownloadFileServlet extends HttpServlet {
         dbl.fileLog(sendDir);
 
 
-        dbl.log(sendDir.listFiles());
         Stream<File> sendDirContents = Arrays.stream(Objects.requireNonNull(sendDir.listFiles()));
-        String downloadId = request.getRequestURI().replace("/download/", ""); //request.getHeader("ticket-id");
+        String downloadId = request.getRequestURI().replace("/download/", "") + ".zip"; //request.getHeader("ticket-id");
 
         dbl.log("URI:", downloadId);
 
