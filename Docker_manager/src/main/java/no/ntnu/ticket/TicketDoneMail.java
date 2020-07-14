@@ -18,7 +18,7 @@ public class TicketDoneMail {
         String from = "noreply@edu.com.io.hvasomhelst";
 
         // Assuming you are sending email from localhost
-        String host = "172.17.0.3";
+        String host = "mail";
 
         // Get system properties
         Properties properties = System.getProperties();

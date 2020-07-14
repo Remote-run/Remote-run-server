@@ -1,6 +1,6 @@
 package no.ntnu.ticket;
 
-import no.ntnu.DockerInterface.DockerFunctons;
+import no.ntnu.DockerInterface.DockerFunctions;
 import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
 import no.ntnu.config.ApiConfig;
@@ -10,18 +10,22 @@ import no.ntnu.sql.PsqlInterface;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.AnnotatedParameterizedType;
 import java.util.Arrays;
 import java.util.UUID;
 
+/**
+ * The representation of a run request
+ */
 public abstract class Ticket {
 
     protected static DebugLogger dbl = new DebugLogger(true);
 
+    /**
+     * The prefix to be used in common naming of ticket related things like images and dirs
+     * to allow for easy distinction of what is system stuff and ticket stuff
+     */
     public static final String commonPrefix = "ticket_";
 
     /**
@@ -38,33 +42,47 @@ public abstract class Ticket {
     protected File runDir;
     protected File saveDir;
     protected File logDir;
+    protected File outDir;
     protected File outFile;
 
 
     private TicketStatus state = TicketStatus.WAITING;
 
-    // debounce to ensure no double runs
+    // to ensure no double run
     private boolean isRunning = false;
 
+
+    /**
+     *  -- tbd -- Have to think about whether or not to use the sql or only local
+     */
     public TicketStatus getState() {
         // TODO: do a sql call here to avoid a potential sync issue
         return state;
     }
 
+    /**
+     * Returns the common name of the ticket, that is the common prfix + the ticket id
+     * @return The common name of the ticket
+     */
     public String getCommonName() {
         return commonName;
     }
 
+    /**
+     * Sets the the new state of the ticket and updates the database
+     * @param state the new state of the ticket
+     */
     private void setState(TicketStatus state) {
         System.out.println(state);
         this.state = state;
-        try {
-            PsqlInterface.updateTicketStatus(ticketId, state);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        PsqlInterface.updateTicketStatus(ticketId, state);
+
     }
 
+    /**
+     * Creates a ticket
+     * @param ticketId the id to give the ticket
+     */
     protected Ticket(UUID ticketId) {
         dbl.log("NEW TICKET ", ticketId);
         this.ticketId = ticketId;
@@ -79,22 +97,22 @@ public abstract class Ticket {
 
 
     /**
-     * Spawns a thread that builds the image if it isnt alredy built and starts the ticket
+     * Starts the build -> run -> save cycle. If the image is already bult it wil not be rebuilt
+     *
+     * This wil spawn another thread and will not block
      */
     public void run() {
-        // TODO: this shold return a bool sying whether or not it was sucsessfull
-
         // avoid potentially running doubble
         if (this.isRunning){
+            // todo: this shold throw an exeption
             return;
         }
 
         this.isRunning = true;
-        dbl.log("start requested for aaaaa \n\n\n\n", this.getTicketId());
 
-        // If the image exists bump the ticket to redy
+        // If the image exists bump the ticket to ready
         if(this.state.equals(TicketStatus.WAITING) && this.doesImageExist()){
-            dbl.log("image found for id bumping it", this.getTicketId());
+            dbl.log("Image found for id, bumping it to ready. ID: ", this.getTicketId());
             setState(TicketStatus.READY);
         }
 
@@ -104,7 +122,7 @@ public abstract class Ticket {
                     case WAITING:
                         this.build();
                     case INSTALLING:
-                        if (!doesImageExist()){// todo: messy remove
+                        if (!doesImageExist()){// todo: messy remove, ehhhh shold not realy be needed, but...
                             this.build();
                         }
                         this.buildThread.join();
@@ -113,11 +131,11 @@ public abstract class Ticket {
                             throw new TicketErrorException();
                         }
                         DockerRunCommand runCommand = this.getStartCommand();
-                        //runCommand.setDumpIO(true);
 
                         runCommand.setErrorFile(new File(this.logDir, "run_error"));
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
                         runCommand.setOnComplete(this::onComplete);
+
 
                         this.setState(TicketStatus.RUNNING);
                         runCommand.run();
@@ -138,10 +156,9 @@ public abstract class Ticket {
      * Can be called premtivly here to ready the ticket
      */
     public void build() {
-        dbl.log("build requested for ", this.getTicketId());
+        dbl.log("Build requested for ID: ", this.getTicketId());
         if (this.state.equals(TicketStatus.WAITING)) {
             this.buildThread = new Thread(() -> {
-                dbl.log("start requested for\n\n\n\n bbbbbbbbbbbbbbb \n\n\n\n", this.getTicketId());
                 if (buildRunTypeTicket()){
                     this.setState(TicketStatus.READY);
                 } else {
@@ -154,52 +171,70 @@ public abstract class Ticket {
         }
     }
 
+    /**
+     * Return whether or not the ticket is don executing that is if it's done or voided
+     * @return Whether or not the ticket is don executing.
+     */
     public boolean isDone() {
         return this.state.equals(TicketStatus.DONE) || this.state.equals(TicketStatus.VOIDED) ;
     }
 
+    /**
+     * Returns the ticket id.
+     * @return The ticket id.
+     */
     public UUID getTicketId() {
         return ticketId;
     }
 
+    /**
+     * Gets the DockerRunCommand object to run when the ticket should start executing.
+     * @return The DockerRunCommand object to run when the ticket should start executing.
+     */
     protected abstract DockerRunCommand getStartCommand();
 
+
+    //todo: mabye remove
     protected abstract ApiConfig getTicketConfig();
 
+
     /**
-     * Builds the image(es) and does the actions needed for the ticket to be run
-     *
-     *
-     * @return whether or not the build was successful
+     * Completes all the build and run actions necessary to be able to run the DockerRunCommand
+     * on ticket execution.
+     * This method should be blocking until all preparation tasks are done,
+     * and should return a bool indicating whether or not the the prep actions where successful
+     * @return Whether or not the the prep actions where successful.
      */
     protected abstract boolean buildRunTypeTicket();
 
 
-
+    /**
+     * Returns a bool indicating whether or not a image with the tickets common name exists in the local repo.
+     * @return Whether or not a image with the tickets common name exists in the local repo.
+     */
     private boolean doesImageExist(){
-        UUID[] imageList = DockerFunctons.getImages();
+        UUID[] imageList = DockerFunctions.getTicketImages();
         return Arrays.stream(imageList).anyMatch(uuid -> uuid.equals(this.ticketId));
     }
 
-    private boolean isTicketThreadFree(){
-        boolean free = true;
-
-        if (this.buildThread != null){
-            if (this.buildThread.isAlive()){
-                free = false;
-            }
-        }
-        return free;
-    }
 
     /**
-     * Some error has caused this ticket to become un completeable log what can be logged and remove the ticket
+     * Som error has occurred making the execution of the ticket not possible.
+     *
+     * the ticket wil be removed and the owner notified
      */
     private void voidTicket() {
         this.setState(TicketStatus.VOIDED);
-        System.out.println("// ############### TICKET VOIDED ############### //");
+        System.out.println("\n// ############### TICKET VOIDED ############### //");
         System.out.println("ticket id: " + this.ticketId);
-        System.out.println("// ############################################# //");
+        System.out.println("// ############################################# //\n");
+
+        try {
+            TicketDoneMail.sendMail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), this);
+            Compression.zip(saveDir, outFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -207,49 +242,32 @@ public abstract class Ticket {
      * removes the run files, logs and so on for the ticket
      */
     private void cleanOutRemains(){
-
+        // todo: ether do this or move it pbl put it on a clock somwhere so the ticket object does not have to live for weeks
     }
 
 
-
+    /**
+     * The method run on completion of the tickets execution
+     * @param process the process of the execution
+     * @param throwable if an error occurred, the error, else null
+     */
     private void onComplete(Process process, Throwable throwable){
-        System.out.println(process.exitValue());
-        System.out.println(throwable);
         if (process.exitValue() == 0){
             // all ok save and complete
             try {
                 Compression.zip(saveDir, outFile);
                 this.setState(TicketStatus.DONE);
-                // bip.bop.sendMail skal her
                 TicketDoneMail.sendMail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), this);
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
         } else {
-            dbl.log("RUN ERROR FOR TICKET ", ticketId);
+            dbl.log("RUN ERROR FOR TICKET ID:", ticketId);
             this.setState(TicketStatus.VOIDED);
         }
 
         // ether way remove the images
-        DockerFunctons.cleanTicket(this.ticketId);
+        DockerFunctions.cleanTicket(this.ticketId);
     }
-
-    // Mabye move theese over to DockerCommand
-
-
-    public static void moveTicketToBuildHelperContext(Ticket ticket) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder();
-        builder.command("bash", "-c","mv", ticket.runDir.getCanonicalPath(), DockerManager.buildHelpers.getAbsolutePath() + "/" );
-        builder.start().waitFor();
-    }
-
-    public static void moveTicketBackFromBuildHelperContext(Ticket ticket) throws IOException, InterruptedException {
-        ProcessBuilder builder = new ProcessBuilder();
-        builder.command("bash", "-c","mv", new File(DockerManager.buildHelpers.getAbsolutePath(), ticket.commonName).getAbsolutePath(), DockerManager.runDir.getAbsolutePath() + "/" );
-        builder.start().waitFor();
-    }
-
-
-
 }

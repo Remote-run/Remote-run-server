@@ -12,7 +12,7 @@
   </servlet>
 <servlet>
     <servlet-name>DownloadFileServlet</servlet-name>
-    <servlet-class>no.ntnu.DownloadFileServlet</servlet-class>
+    <servlet-class>no.ntnu.ResultDownloadServlet</servlet-class>
   </servlet>
 
 <servlet-mapping>

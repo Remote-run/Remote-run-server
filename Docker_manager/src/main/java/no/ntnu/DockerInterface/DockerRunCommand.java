@@ -7,6 +7,10 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+// todo: documentation here is shit
+/**
+ * The default run command for a container. Can be configured
+ */
 public class DockerRunCommand extends DockerCommand {
 
     private HashMap<String,String> volumes = new HashMap<>();
@@ -15,35 +19,60 @@ public class DockerRunCommand extends DockerCommand {
     private String containerName;
     private String network;
 
+
+    /**
+     * Creates a new runCommand
+     * @param image the image to build from
+     * @param containerName the name to give the container while running
+     * @param gpu -- tbd --
+     */
+    public DockerRunCommand(String image, String containerName, int gpu) {
+        this.image = image;
+        this.containerName = containerName;
+        this.gpu = gpu;
+        this.network = "host";
+    }
+
+    /**
+     * Adds a volume to the run command.
+     * @param from the absolute path on the host machine or the volume to bind from
+     * @param to the absolute path on the container to mount the from dir/volume
+     */
     public void addVolume(String from, String to){
         volumes.put(from, to);
     }
 
-    public int getGpu() {
-        return gpu;
-    }
-
-    public void setGpu(int gpu) {
-        this.gpu = gpu;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-
-    public DockerRunCommand(String image, String containerName, int gpu, String network) {
-        this.image = image;
-        this.containerName = containerName;
-        this.gpu = gpu;
+    /**
+     * Sets the network used by the container.
+     * @param network The network used by the container.
+     */
+    public void setNetwork(String network) {
         this.network = network;
     }
 
 
+
+    // TODO: decide how to finally handle this.
+    public int getGpu() {
+        return gpu;
+    }
+    public void setGpu(int gpu) {
+        this.gpu = gpu;
+    }
+
+
+    /**
+     * Sets the image to build from.
+     * @param image The image to build from.
+     */
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    /**
+     * Builds the docker command and returns a list of the command parts.
+     * @return A list of all the command parts for the command to run.
+     */
     protected ArrayList<String> buildCommand(){
         ArrayList<String> commandParts = new ArrayList<>();
 

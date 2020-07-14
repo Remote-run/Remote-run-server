@@ -67,9 +67,6 @@ public class RemoteRunApiServlet extends HttpServlet {
                         item.write(uploadedFile);
                         dbl.log("write ok");
 
-                        // todo remove
-                        //uploadedFile.setReadable(true);
-
                         File decompressedDir = new File(tmpdir, ticket_id.toString());
                         decompressedDir.mkdir();
                         Compression.unzip(uploadedFile, decompressedDir );
@@ -112,7 +109,7 @@ public class RemoteRunApiServlet extends HttpServlet {
                         RunType rt = ApiConfig.getRunType(configFile);
                         if (rt == RunType.JAVA){
                             JavaApiConfig typeConfig = new JavaApiConfig(configFile);
-                            PsqlInterface.insertNewTicket(ticket_id, typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
+
 
                             // this can't possibly be the best solution
                             ProcessBuilder builder = new ProcessBuilder();
@@ -128,6 +125,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                             //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
                             dbl.log("saved at: ", new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
+                            PsqlInterface.insertNewTicket(ticket_id, typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
                         }
 
                         dbl.log("Full ok");

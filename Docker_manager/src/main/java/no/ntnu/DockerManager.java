@@ -7,8 +7,11 @@ import no.ntnu.sql.PsqlInterface;
 import no.ntnu.ticket.JavaTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collector;
@@ -26,6 +29,8 @@ public class DockerManager {
      *
      * TODO:
      *      - the INSTALLING ticket have to be flushed on porerup
+     *
+     *      - stuff that where running gets anoyd over stuff in their place, so remove out for ticket that whre on running
      *
      *
      *
@@ -48,10 +53,10 @@ public class DockerManager {
     public static final File runDir        = new File(saveDataDir, "run");
     public static final File saveDir       = new File(saveDataDir, "save");
     public static final File logDir        = new File(saveDataDir, "logs");
-    public static final File buildHelpers  = new File(saveDataDir, "buildHelpers");
+    public static final File buildHelpers  = new File(saveDataDir, "build_helpers");
 
     // docker volume not a dir
-    public static final File sendDir       = new File("send");
+    public static final File sendDir       = new File("/send");
 
     public static File translateSaveDataFileToHostFile(File file){
         dbl.log("in path", file);
@@ -64,6 +69,7 @@ public class DockerManager {
 
 
     public DockerManager(){
+
 
 
         runDir.mkdir();
@@ -160,22 +166,11 @@ public class DockerManager {
                     if (Stream.of(backlog, running)
                             .flatMap(tickets -> tickets.stream().map(Ticket::getTicketId))
                             .noneMatch(id::equals)){
-                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                        dbl.log("backlog: ", backlog.toString());
-                        dbl.log("running: ", running.toString());
                         dbl.log(id);
                         this.addToBacklog(id);
                     }
 
-                }
-                /*backlog.stream().noneMatch(ticket -> ticket.getTicketId().equals(id))
-                running.stream().noneMatch(ticket -> ticket.getTicketId().equals(id))){
-                    System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                    dbl.log("all ids", backlog.toString());
-                    dbl.log("all ids", running.toString());
-                    dbl.log(id);
-                    this.addToBacklog(id);
-                } */else {
+                } else {
                     break;
                 }
             }
@@ -185,9 +180,14 @@ public class DockerManager {
     //remove if nothing more is added fluff is unececery
     private void addToBacklog(UUID ticketID){
         dbl.log("added ticket:", ticketID);
-        //Ticket ticket = this.getTicket(ticketID);/
-        //TODO: build ticket here after the testing
-        this.backlog.add(this.getTicket(ticketID));
+
+        Ticket ticket = this.getTicket(ticketID);
+        if (ticket != null){
+            if(ticket.getState() == TicketStatus.WAITING){
+                ticket.build();
+            }
+            this.backlog.add(ticket);
+        }
     }
 
     private void startTicket(Ticket ticket){
@@ -216,7 +216,13 @@ public class DockerManager {
             };
 
 
-        } catch (Exception e){
+        } catch (FileNotFoundException e){
+            dbl.log("Config not found voiding ticket");
+            PsqlInterface.updateTicketStatus(ticketID, TicketStatus.VOIDED);
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        } catch (ParseException e){
             e.printStackTrace();
         }
 
