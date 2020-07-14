@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 //@WebServlet(name="download",urlPatterns={"/download"})
-public class DownloadFileServlet extends HttpServlet {
+public class ResultDownloadServlet extends HttpServlet {
 
     private DebugLogger dbl = new DebugLogger(true);
 
@@ -27,16 +27,13 @@ public class DownloadFileServlet extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request,
                          HttpServletResponse response) throws ServletException, IOException {
-        File sendDir = new File(System.getenv("SEND_DIR"));
-        dbl.fileLog(sendDir);
 
+
+        File sendDir = new File(System.getenv("SEND_DIR"));
 
         Stream<File> sendDirContents = Arrays.stream(Objects.requireNonNull(sendDir.listFiles()));
         String downloadId = request.getRequestURI().replace("/download/", "") + ".zip"; //request.getHeader("ticket-id");
 
-        dbl.log("URI:", downloadId);
-
-        dbl.log();
 
         if (sendDirContents.anyMatch(file -> file.getName().equals(downloadId))){
             File downloadFile = new File(sendDir, downloadId);

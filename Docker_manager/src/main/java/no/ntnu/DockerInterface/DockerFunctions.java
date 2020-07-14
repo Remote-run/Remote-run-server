@@ -7,68 +7,40 @@ import no.ntnu.util.DebugLogger;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 
 
 /**
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- * problemet er at stuff blir bygd og trenger stuff utenfor conexten dette kan potensielt fikses med litt trickery men det er hva issuen er per nå
- *
- *
- * /sidenote veldig mye mindre stablit og debug vennelig en fåretrokket
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
+ * contains different practical docker functions manly
+ * used to start, stop, and get info about tickets being run
  */
-
-
-
-
-public class DockerFunctons {
+public class DockerFunctions {
 
     private static DebugLogger dbl = new DebugLogger(true);
 
+    /**
+     * Gets a list of the ticket id's that has a image in the local docker repo,
+     * that follow the standard ticket naming conventions, that is:
+     * Ticket.commonPrefix + ticketId
+     * @return A array containing the uuid's for the tickets with images
+     */
+    public static UUID[] getTicketImages(){
+        UUID[] ret = Arrays.stream(DockerFunctions.getImages())
+                .filter(image -> image.startsWith(Ticket.commonPrefix))
+                .map(commonName -> commonName.replaceFirst(Ticket.commonPrefix, ""))
+                .map(UUID::fromString).toArray(UUID[]::new);
 
-    public static UUID[] getImages(){
-        //docker image ls  --format "{{.Repository}}"
-        ArrayList<UUID> idList = new ArrayList<>();
+        return ret;
+    }
+
+    /**
+     * Return a list of all images currently in the local repo.
+     * @return A list of all images currently in the local repo.
+     */
+    public static String[] getImages(){
+        ArrayList<String> idList = new ArrayList<>();
 
         DockerGenericCommand command = new DockerGenericCommand(
                 "docker image ls --format \"{{.Repository}}\""
@@ -82,12 +54,9 @@ public class DockerFunctons {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-
             String line;
             while ((line = bufferedReader.readLine()) != null){
-                if (line.startsWith(Ticket.commonPrefix)){
-                    idList.add(UUID.fromString(line.replaceFirst(Ticket.commonPrefix,"")));
-                }
+                idList.add(line);
             }
             bufferedReader.close();
 
@@ -95,8 +64,7 @@ public class DockerFunctons {
             e.printStackTrace();
         }
 
-        return idList.toArray(UUID[]::new);
-
+        return idList.toArray(String[]::new);
     }
 
     /**
@@ -135,8 +103,8 @@ public class DockerFunctons {
      * @param ticketId the id of the ticket to clean
      */
     public static void cleanTicket(UUID ticketId){
-        DockerFunctons.removeContainer(Ticket.commonPrefix + ticketId);
-        DockerFunctons.removeImage(Ticket.commonPrefix + ticketId);
+        DockerFunctions.removeContainer(Ticket.commonPrefix + ticketId);
+        DockerFunctions.removeImage(Ticket.commonPrefix + ticketId);
     }
 
     /**
@@ -156,33 +124,5 @@ public class DockerFunctons {
         DockerGenericCommand command = new DockerGenericCommand(
                 String.format("docker image rm %s" , imageName));
         command.run();
-    }
-
-
-    public static Process buildTicketImage(UUID ticketId, File buildDir, File dockerFile) throws IOException {
-        dbl.log("building", ticketId);
-        //dbl.fileLog(buildDir);
-        //dbl.fileLog(dockerFile);
-        DockerImageBuildCommand command = new DockerImageBuildCommand(ticketId, buildDir, dockerFile);
-        command.setOnComplete((process, throwable) -> {
-            if (throwable == null && process != null){
-                dbl.log("check that is zero at normal term ->", process.exitValue());
-                if (process.exitValue() == 0){
-                    try {
-                        // todo: this may have issues with beeing caugth, given the asyncness
-                        PsqlInterface.updateTicketStatus(ticketId, TicketStatus.READY);
-                    } catch (Exception e){
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    System.out.println("ERROR BUILDING IMAGA CODE:" + process.exitValue());
-                }
-            }
-        });
-
-        command.setBlocking(true);
-        return command.run();
-
     }
 }
