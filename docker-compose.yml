@@ -1,0 +1,132 @@
+version: '3.8'
+
+
+
+services:
+  postgres_db:
+    image: postgres
+    container_name: postgres_db
+
+    env_file:
+      - ./db_login.env
+
+#    environment:
+#      PGDATA: "/var/lib/postgresql/data/pgdata"
+
+
+    volumes:
+#    - type: volume
+#      source: db_data
+#      target: /var/lib/postgresql/data
+    - type: bind
+      source: ./DockerFiles/posgress/db_init_scripts
+      target: /docker-entrypoint-initdb.d
+
+    networks:
+      db_network:
+
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+        mode: host
+
+# this doses not work in compose but works perfectly when just run with docker run
+  mail:
+    image: namshi/smtp
+    container_name: mail
+#    networks:
+#      backend:
+
+#    network_mode: host
+
+#    dns: 1.1.1.1
+
+#    ports:
+#      - "25:25"
+#      - "587:587"
+#      - "465:465"
+
+
+
+  api_server:
+    container_name: api_server
+
+    build:
+      context: ./ServerApi
+      dockerfile: ./Dockerfile
+
+    env_file:
+      - ./db_login.env
+
+
+    volumes:
+    - type: bind
+      source: ./save_data/run
+      target: /runvol
+
+    networks:
+      db_network:
+      frontend:
+
+    depends_on:
+      - postgres_db
+
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: host
+
+  docker_manager:
+    container_name: docker_manager
+
+    build:
+      context: ./Docker_manager
+      dockerfile: Dockerfile
+
+    env_file:
+      - ./db_login.env
+
+    environment:
+      SAVE_DATA_SYS_PATH: "${SAVE_DATA_SYS_PATH}"
+
+    volumes:
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+    - type: bind
+      source: ./save_data
+      target: /save_data
+    - type: bind
+      source: ./Docker_manager/RUNTYPES
+      target: /runtypes
+    - type: volume
+      source: to_send
+      target: /send
+
+    networks:
+      db_network:
+      backend:
+
+    depends_on:
+      - postgres_db
+      - mail
+
+
+
+
+
+networks:
+  db_network:
+    internal: true
+
+
+  frontend:
+  backend:
+  ticketNetwork:
+    external: true
+
+volumes:
+  db_data:
+  to_send:
