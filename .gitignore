@@ -22,7 +22,7 @@ Docker_manager/target
 
 ServerApi/target
 
-
+*env
 
 
 /DockerFiles/maven_package_run/m2/*
