@@ -8,5 +8,5 @@ fi
 export SAVE_DATA_SYS_PATH=$(realpath ./save_data)
 
 docker network create ticketNetwork >> /dev/null
-
+docker-compose build
 docker-compose up
