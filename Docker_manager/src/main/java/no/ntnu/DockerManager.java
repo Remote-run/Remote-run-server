@@ -5,6 +5,7 @@ import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.ticket.JavaTicket;
+import no.ntnu.ticket.PythonTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
 import org.json.simple.parser.ParseException;
@@ -28,9 +29,11 @@ public class DockerManager {
     /**
      *
      * TODO:
-     *      - the INSTALLING ticket have to be flushed on porerup
+     *      On powerup:
+     *          - the INSTALLING ticket have to be flushed on porerup
+     *          - remove the run and logg files for the instances that are listed as runnin in the db to avoid conflict
+     *          - add the conteiner network if dont exist
      *
-     *      - stuff that where running gets anoyd over stuff in their place, so remove out for ticket that whre on running
      *
      *
      *
@@ -55,6 +58,9 @@ public class DockerManager {
     public static final File logDir        = new File(saveDataDir, "logs");
     public static final File buildHelpers  = new File(saveDataDir, "build_helpers");
 
+    // a dir with no children to use as build context
+    public static final File buildHole     = new File(buildHelpers, "build_hole");
+
     // docker volume not a dir
     public static final File sendDir       = new File("/send");
 
@@ -77,6 +83,7 @@ public class DockerManager {
         logDir.mkdir();
         buildHelpers.mkdir();
         sendDir.mkdir();
+        buildHole.mkdir();
     }
 
 
@@ -211,7 +218,7 @@ public class DockerManager {
 
             ticket = switch (runType){
                 case JAVA -> new JavaTicket(ticketID, 1);
-                case PYTHON -> null;
+                case PYTHON -> new PythonTicket(ticketID, 1);
                 default -> null;
             };
 
@@ -226,7 +233,7 @@ public class DockerManager {
             e.printStackTrace();
         }
 
-        dbl.log("TICKET ADD OK\n\n");
+        dbl.log("TICKET ADD OK");
         return ticket;
 
 

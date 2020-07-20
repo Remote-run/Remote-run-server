@@ -32,7 +32,7 @@ public class ResultDownloadServlet extends HttpServlet {
         File sendDir = new File(System.getenv("SEND_DIR"));
 
         Stream<File> sendDirContents = Arrays.stream(Objects.requireNonNull(sendDir.listFiles()));
-        String downloadId = request.getRequestURI().replace("/download/", "") + ".zip"; //request.getHeader("ticket-id");
+        String downloadId = request.getRequestURI().replace("/download/", "") + ".zip";
 
 
         if (sendDirContents.anyMatch(file -> file.getName().equals(downloadId))){

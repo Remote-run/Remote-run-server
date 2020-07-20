@@ -1,15 +1,24 @@
 ARG image
-ARG runfile
-ARG args
+
 
 FROM $image
+
+
+RUN apt update
+RUN apt install -y python3
+RUN apt install -y python3-pip
+
+COPY requirements.txt /tmp/requirements.txt
+
+RUN pip3 install -r /tmp/requirements.txt
 
 WORKDIR /app/
 
 RUN mkdir /app/save_data
 RUN ln -s save_data /save
 
-RUN pip install -r requirements.txt
+ENV runfile="main.py"
+ENV args=""
 
 CMD python3 $runfile $args
 

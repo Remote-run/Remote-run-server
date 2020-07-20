@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import no.ntnu.config.ApiConfig;
 import no.ntnu.config.JavaApiConfig;
+import no.ntnu.config.PythonApiConfig;
 import no.ntnu.enums.RunType;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.util.Compression;
@@ -107,26 +108,30 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                         // this should be extracted to another class
                         RunType rt = ApiConfig.getRunType(configFile);
-                        if (rt == RunType.JAVA){
-                            JavaApiConfig typeConfig = new JavaApiConfig(configFile);
-
-
-                            // this can't possibly be the best solution
-                            ProcessBuilder builder = new ProcessBuilder();
-                            builder.command("bash", "-c",String.join(" ","mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath()));
-
-                            builder.inheritIO();
-                            Process process = builder.start();
-                            process.waitFor();
-                            dbl.log("mv exit value", process.exitValue());
+                        ApiConfig config = switch (rt){
+                            case JAVA -> new JavaApiConfig(configFile);
+                            case PYTHON -> new PythonApiConfig(configFile);
+                            default -> null;
+                        };
 
 
 
+                        // this can't possibly be the best solution
+                        ProcessBuilder builder = new ProcessBuilder();
+                        builder.command("bash", "-c",String.join(" ","mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath()));
 
-                            //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
-                            dbl.log("saved at: ", new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
-                            PsqlInterface.insertNewTicket(ticket_id, typeConfig.getRunType(),typeConfig.getReturnMail(),typeConfig.getPriority());
-                        }
+                        builder.inheritIO();
+                        Process process = builder.start();
+                        process.waitFor();
+                        dbl.log("mv exit value", process.exitValue());
+
+
+
+
+                        //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
+                        dbl.log("saved at: ", new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
+                        PsqlInterface.insertNewTicket(ticket_id, config.getRunType(),config.getReturnMail(),config.getPriority());
+
 
                         dbl.log("Full ok");
 
@@ -138,6 +143,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
             }
         } catch (Exception e) {
+            // TODO: more finess in catching here
             System.out.println(e.getMessage());
             e.printStackTrace();
         }

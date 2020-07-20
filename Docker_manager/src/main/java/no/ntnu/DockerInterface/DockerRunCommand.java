@@ -14,6 +14,7 @@ import java.util.function.Function;
 public class DockerRunCommand extends DockerCommand {
 
     private HashMap<String,String> volumes = new HashMap<>();
+    private HashMap<String,String> envVariables = new HashMap<>();
     private int gpu = 0;
     private String image;
     private String containerName;
@@ -40,6 +41,15 @@ public class DockerRunCommand extends DockerCommand {
      */
     public void addVolume(String from, String to){
         volumes.put(from, to);
+    }
+
+    /**
+     * Adds an eviorment variable to the run command
+     * @param varName the name of the env variable to set
+     * @param varValue the value the the env variable to set
+     */
+    public void addEnvVariable(String varName, String varValue){
+        envVariables.put(varName, varValue);
     }
 
     /**
@@ -102,6 +112,11 @@ public class DockerRunCommand extends DockerCommand {
         // volumes
         for (Map.Entry volume:this.volumes.entrySet()){
             commandParts.add(String.format("-v %s:%s", volume.getKey(),volume.getValue()));
+        }
+
+        // env vars
+        for (Map.Entry var:this.envVariables.entrySet()){
+            commandParts.add(String.format("-e %s=\"%s\"", var.getKey(),var.getValue()));
         }
 
         commandParts.add(this.image);

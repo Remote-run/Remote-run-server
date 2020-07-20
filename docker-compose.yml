@@ -8,7 +8,7 @@ services:
     container_name: postgres_db
 
     env_file:
-      - ./db_login.env
+      - ./DockerFiles/posgress/db_login.env
 
 #    environment:
 #      PGDATA: "/var/lib/postgresql/data/pgdata"
@@ -31,23 +31,6 @@ services:
         protocol: tcp
         mode: host
 
-# this doses not work in compose but works perfectly when just run with docker run
-  mail:
-    image: namshi/smtp
-    container_name: mail
-#    networks:
-#      backend:
-
-#    network_mode: host
-
-#    dns: 1.1.1.1
-
-#    ports:
-#      - "25:25"
-#      - "587:587"
-#      - "465:465"
-
-
 
   api_server:
     container_name: api_server
@@ -57,13 +40,17 @@ services:
       dockerfile: ./Dockerfile
 
     env_file:
-      - ./db_login.env
+      - ./DockerFiles/posgress/db_login.env
 
 
     volumes:
     - type: bind
       source: ./save_data/run
       target: /runvol
+
+    - type: volume
+      source: to_send
+      target: /send
 
     networks:
       db_network:
@@ -86,10 +73,11 @@ services:
       dockerfile: Dockerfile
 
     env_file:
-      - ./db_login.env
+      - ./DockerFiles/posgress/db_login.env
+      - ./DockerFiles/email_login.env
 
     environment:
-      SAVE_DATA_SYS_PATH: "${SAVE_DATA_SYS_PATH}"
+      SAVE_DATA_SYS_PATH: $PWD
 
     volumes:
     - type: bind
@@ -111,9 +99,43 @@ services:
 
     depends_on:
       - postgres_db
-      - mail
 
 
+  # https://github.com/mikael2/payara-postgres-nginx/
+  nginx:
+    container_name: nginx
+
+    build:
+      context: ./DockerFiles/nginx_certbot
+      dockerfile: Dockerfile
+
+
+
+
+    volumes:
+      - type: volume
+        source: nginx_data
+        target: /etc/letsencrypt
+
+    env_file:
+      - ./DockerFiles/nginx_certbot/nginx_cerbot.env
+
+    logging:
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    networks:
+      frontend:
+
+    depends_on:
+      - api_server
+
+    restart: unless-stopped
 
 
 
@@ -129,4 +151,5 @@ networks:
 
 volumes:
   db_data:
+  nginx_data:
   to_send:

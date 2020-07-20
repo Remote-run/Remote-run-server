@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -17,6 +19,8 @@ public class DockerImageBuildCommand extends DockerCommand {
     private String imageName;
     private File buildDir;
     private File dockerFile;
+
+    private HashMap<String,String> imageBuildArgs = new HashMap<>();
 
     /**
      * Creates a docker build command, with image name bult form a ticket id
@@ -52,6 +56,10 @@ public class DockerImageBuildCommand extends DockerCommand {
         this.validateDockerfile();
     }
 
+    public void setBuildArg(String arg, String value){
+        imageBuildArgs.put(arg,value);
+    }
+
     /**
      * Builds the docker command and returns a list of the command parts.
      * @return A list of all the command parts for the command to run.
@@ -66,6 +74,11 @@ public class DockerImageBuildCommand extends DockerCommand {
 
         // tag (name)
         commandParts.add("-t " + this.imageName);
+
+        // build vars
+        for (Map.Entry var:this.imageBuildArgs.entrySet()){
+            commandParts.add(String.format("--build-arg %s=\"%s\"", var.getKey(),var.getValue()));
+        }
 
         // build root
         commandParts.add(buildDir.getAbsolutePath());

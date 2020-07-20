@@ -30,7 +30,7 @@ public class JavaTicket extends Ticket {
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.runDir).getAbsolutePath(),"/app/");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.saveDir).getAbsolutePath(),"/save/");
 
-        ticketConfig = new JavaApiConfig();
+        ticketConfig = new JavaApiConfig(new File(super.runDir, ApiConfig.commonConfigName));
     }
 
     /**
@@ -63,7 +63,7 @@ public class JavaTicket extends Ticket {
                 dbl.log("Install image is not built bulding it");
                 int exitcode = -1;
                 try{
-                    DockerImageBuildCommand buildCommand = new DockerImageBuildCommand("maven_install_image", new File(DockerManager.buildHelpers, "build_hole") ,JavaTicket.mavenInstallDockerfile);
+                    DockerImageBuildCommand buildCommand = new DockerImageBuildCommand("maven_install_image", DockerManager.buildHole ,JavaTicket.mavenInstallDockerfile);
                     buildCommand.setBlocking(true);
                     Process installProcess = buildCommand.run();
                     exitcode = installProcess.exitValue();
