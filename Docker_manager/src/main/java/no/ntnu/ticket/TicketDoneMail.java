@@ -10,6 +10,48 @@ import java.util.Properties;
 import java.util.UUID;
 
 public class TicketDoneMail {
+    public static void main(String[] args) {
+        TicketDoneMail.test();
+    }
+    public static void test(){
+        String host="smtp.gmail.com";
+        final String user="noreply.remote.run@gmail.com";//change accordingly
+        final String password="";//change accordingly
+
+        String to="blomsterpotte1998@gmail.com";//change accordingly
+
+        //Get the session object
+        Properties properties = new Properties();
+
+        properties.put("mail.smtp.host", host);
+        properties.put("mail.smtp.port", "465");
+        properties.put("mail.smtp.ssl.enable", "true");
+        properties.put("mail.smtp.auth", "true");
+
+        Session session = Session.getDefaultInstance(properties,
+                new javax.mail.Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(user,password);
+                    }
+                });
+
+
+
+        try {
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(user));
+            message.addRecipient(Message.RecipientType.TO,new InternetAddress(to));
+            message.setSubject("javatpoint");
+            message.setText("This is simple program of sending email using JavaMail API");
+
+            //send the message
+            Transport.send(message);
+
+            System.out.println("message sent successfully...");
+
+        } catch (MessagingException e) {e.printStackTrace();}
+
+    }
 
     public static void sendMail(String to, Ticket ticket){
         String dlLink = "localhost:8080/download/" + ticket.getCommonName();
