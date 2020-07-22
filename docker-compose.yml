@@ -10,14 +10,14 @@ services:
     env_file:
       - ./DockerFiles/posgress/db_login.env
 
-#    environment:
-#      PGDATA: "/var/lib/postgresql/data/pgdata"
+    environment:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
 
 
     volumes:
-#    - type: volume
-#      source: db_data
-#      target: /var/lib/postgresql/data
+    - type: volume
+      source: db_data
+      target: /var/lib/postgresql/data
     - type: bind
       source: ./DockerFiles/posgress/db_init_scripts
       target: /docker-entrypoint-initdb.d
@@ -30,6 +30,8 @@ services:
         published: 5432
         protocol: tcp
         mode: host
+
+    restart: unless-stopped
 
 
   api_server:
@@ -65,6 +67,8 @@ services:
         protocol: tcp
         mode: host
 
+    restart: unless-stopped
+
   docker_manager:
     container_name: docker_manager
 
@@ -77,7 +81,7 @@ services:
       - ./DockerFiles/email_login.env
 
     environment:
-      SAVE_DATA_SYS_PATH: $PWD
+      SAVE_DATA_SYS_PATH: $PWD/save_data
 
     volumes:
     - type: bind
@@ -99,6 +103,8 @@ services:
 
     depends_on:
       - postgres_db
+
+    restart: unless-stopped
 
 
   # https://github.com/mikael2/payara-postgres-nginx/
