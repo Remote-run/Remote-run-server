@@ -26,26 +26,7 @@ import java.util.stream.Stream;
 
 public class DockerManager {
 
-    /**
-     *
-     * TODO:
-     *      On powerup:
-     *          - the INSTALLING ticket have to be flushed on porerup
-     *          - remove the run and logg files for the instances that are listed as runnin in the db to avoid conflict
-     *          - add the conteiner network if dont exist
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     */
+
 
     private static final DebugLogger dbl = new DebugLogger(true);
 
@@ -76,8 +57,20 @@ public class DockerManager {
 
     public DockerManager(){
 
+        // delete the files not belonging to any tickets.
+        PowerOnChecks.removeUnusedFiles();
+
+        // deletes the half built images and files for the tickets that where installing dureing the last poweroff, if any.
+        PowerOnChecks.resetWhereInstalling();
+
+        // puts the tickets that where running during the last poweroff first in que
+        this.backlog.addAll(Arrays.asList(PowerOnChecks.getWhereRunning()));
+
+        // appends the ticket that were redy to run but waiting to the que
+        this.backlog.addAll(Arrays.asList(PowerOnChecks.getWhereReady()));
 
 
+        // makes the common dirs if they do not exist
         runDir.mkdir();
         saveDir.mkdir();
         logDir.mkdir();
@@ -128,12 +121,10 @@ public class DockerManager {
         this.running.removeAll(this.running.stream()
                 .filter(Ticket::isDone)
                 .collect(Collectors.toCollection(ArrayList::new)));
-        System.out.println(this.running.stream()
-                .map(Ticket::isDone)
-                .collect(Collectors.toCollection(ArrayList<Boolean>::new)).toString());
+
 
         // if a ticket was voided on install it is removed here
-        this.backlog.removeAll(this.running.stream()
+        this.backlog.removeAll(this.backlog.stream()
                 .filter(Ticket::isDone)
                 .collect(Collectors.toCollection(ArrayList::new)));
 
@@ -188,7 +179,7 @@ public class DockerManager {
     private void addToBacklog(UUID ticketID){
         dbl.log("added ticket:", ticketID);
 
-        Ticket ticket = this.getTicket(ticketID);
+        Ticket ticket = Ticket.getTicketFromUUID(ticketID);
         if (ticket != null){
             if(ticket.getState() == TicketStatus.WAITING){
                 ticket.build();
@@ -207,62 +198,9 @@ public class DockerManager {
 
 
 
-    private Ticket getTicket(UUID ticketID){
-        dbl.log("TRY ADD TICKET\n\n");
-        Ticket ticket = null;
-
-        try {
-
-            File ticketRunDir = new File(runDir, Ticket.commonPrefix + ticketID);
-            RunType runType = ApiConfig.getRunType(new File(ticketRunDir, ApiConfig.commonConfigName));
-
-            ticket = switch (runType){
-                case JAVA -> new JavaTicket(ticketID, 1);
-                case PYTHON -> new PythonTicket(ticketID, 1);
-                default -> null;
-            };
-
-
-        } catch (FileNotFoundException e){
-            dbl.log("Config not found voiding ticket");
-            PsqlInterface.updateTicketStatus(ticketID, TicketStatus.VOIDED);
-            e.printStackTrace();
-        } catch (IOException e){
-            e.printStackTrace();
-        } catch (ParseException e){
-            e.printStackTrace();
-        }
-
-        dbl.log("TICKET ADD OK");
-        return ticket;
-
-
-    }
-
-
-    /**
-     * Fills the backlog with the ticket that where potentially running before poweroff
-     * this is run at poweronn to ensure no ticket are "stuck" in the running state
-     */
-    public void handleStrugglers(){
-        try {
-            UUID[] strugglers = PsqlInterface.getTicketsWithStatus(TicketStatus.RUNNING);
-
-            if (strugglers.length != 0){
-                Arrays.stream(strugglers)
-                        .map(uuid -> this.getTicket(uuid))
-                        .forEach(ticket -> {
-                            this.backlog.add(ticket);
-                        });
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-    }
 
     public static void main( String[] args ) {
         DockerManager manager = new DockerManager();
-        manager.handleStrugglers();
         manager.mainLoop();
     }
 }

@@ -29,21 +29,8 @@ CREATE VIEW  running as
     WHERE status = 'RUNNING';
 
 
-/*
-    this is a table of whats currently running
-    will make more sence when recource usage is implemented
-
-CREATE TABLE active(
-    id             int references tickets(id),
-    done           bool                            not null
-);
-
- */
-/*
-
- */
 CREATE TABLE IF NOT EXISTS out(
     id         uuid references tickets(id) ON DELETE CASCADE,
-    kill_at    int DEFAULT  extract(epoch from now() + interval '7 days')
+    kill_at    bigint DEFAULT  extract(epoch from now() + interval '7 days')
 );
 

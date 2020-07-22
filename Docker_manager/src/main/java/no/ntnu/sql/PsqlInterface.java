@@ -143,6 +143,25 @@ public class PsqlInterface {
 
     }
 
+    public static HashMap<UUID, Long> getKillList() throws SQLException{
+        Connection connection = tryConnectToDB();
+        Statement statement = connection.createStatement();
+
+        String query = "SELECT * FROM out;";
+        ResultSet resultSet = statement.executeQuery(query);
+
+        HashMap<UUID, Long> tmpList = new HashMap<>();
+        while (resultSet.next()){
+            tmpList.put(UUID.fromString(resultSet.getString("id")), resultSet.getLong("kill_at"));
+        }
+
+        resultSet.close();
+        statement.close();
+        connection.close();
+
+        return tmpList;
+    }
+
     public static HashMap<UUID, RunType> getRuntypes(UUID[] ids) throws SQLException{
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
@@ -171,6 +190,25 @@ public class PsqlInterface {
         Statement statement = connection.createStatement();
 
         String query = "SELECT id FROM tickets WHERE status = 'WAITING' ORDER BY run_priority ,timestamp ;";
+        ResultSet resultSet = statement.executeQuery(query);
+
+        ArrayList<UUID> tmpList = new ArrayList<>();
+        while (resultSet.next()){
+            tmpList.add(UUID.fromString(resultSet.getString("id")));
+        }
+
+        resultSet.close();
+        statement.close();
+        connection.close();
+
+        return tmpList.toArray(UUID[]::new);
+    }
+
+    public static UUID[] getAllTicketUUID() throws SQLException{
+        Connection connection = tryConnectToDB();
+        Statement statement = connection.createStatement();
+
+        String query = "SELECT id FROM tickets;";
         ResultSet resultSet = statement.executeQuery(query);
 
         ArrayList<UUID> tmpList = new ArrayList<>();

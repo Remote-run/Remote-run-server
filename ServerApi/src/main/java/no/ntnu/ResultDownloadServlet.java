@@ -22,7 +22,12 @@ public class ResultDownloadServlet extends HttpServlet {
 
     private DebugLogger dbl = new DebugLogger(true);
 
+    /*
+        todo: shold probably return a custom page when a correct or incorect ticket id is entered so it does not look broken
 
+
+
+     */
 
     @Override
     public void doGet(HttpServletRequest request,
