@@ -4,13 +4,16 @@ import no.ntnu.DockerInterface.DockerFunctions;
 import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
 import no.ntnu.config.ApiConfig;
+import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.exeptions.TicketErrorException;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.UUID;
@@ -72,7 +75,7 @@ public abstract class Ticket {
      * Sets the the new state of the ticket and updates the database
      * @param state the new state of the ticket
      */
-    private void setState(TicketStatus state) {
+    public void setState(TicketStatus state) {
         System.out.println(state);
         this.state = state;
         PsqlInterface.updateTicketStatus(ticketId, state);
@@ -122,28 +125,26 @@ public abstract class Ticket {
                     case WAITING:
                         this.build();
                     case INSTALLING:
-                        if (!doesImageExist()){// todo: messy remove, ehhhh shold not realy be needed, but...
-                            this.build();
-                        }
                         this.buildThread.join();
                     case READY:
+
+
+                        // TODO: remove or catch
                         if (!this.doesImageExist()){
-                            throw new TicketErrorException();
+                            throw new TicketErrorException("Ticket image is not built");
                         }
+
                         DockerRunCommand runCommand = this.getStartCommand();
 
                         runCommand.setErrorFile(new File(this.logDir, "run_error"));
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
                         runCommand.setOnComplete(this::onComplete);
 
-
                         this.setState(TicketStatus.RUNNING);
                         runCommand.run();
                 }
-            } catch (TicketErrorException e){
-                dbl.log("Build error on ticket ", ticketId);
-                this.setState(TicketStatus.VOIDED);
             } catch (Exception e){
+                this.voidTicket(TicketExitReason.runError);
                 e.printStackTrace();
             }
         });
@@ -163,7 +164,7 @@ public abstract class Ticket {
                     this.setState(TicketStatus.READY);
                 } else {
                     // build error void ticket
-                    this.voidTicket();
+                    this.voidTicket(TicketExitReason.buildError);
                 }
             });
             this.setState(TicketStatus.INSTALLING);
@@ -223,7 +224,7 @@ public abstract class Ticket {
      *
      * the ticket wil be removed and the owner notified
      */
-    private void voidTicket() {
+    private void voidTicket(TicketExitReason voidReason) {
         this.setState(TicketStatus.VOIDED);
         System.out.println("\n// ############### TICKET VOIDED ############### //");
         System.out.println("ticket id: " + this.ticketId);
@@ -238,12 +239,6 @@ public abstract class Ticket {
 
     }
 
-    /**
-     * removes the run files, logs and so on for the ticket
-     */
-    private void cleanOutRemains(){
-        // todo: ether do this or move it pbl put it on a clock somwhere so the ticket object does not have to live for weeks
-    }
 
 
     /**
@@ -264,10 +259,38 @@ public abstract class Ticket {
 
         } else {
             dbl.log("RUN ERROR FOR TICKET ID:", ticketId);
-            this.setState(TicketStatus.VOIDED);
+            this.voidTicket(TicketExitReason.runError);
         }
 
         // ether way remove the images
         DockerFunctions.cleanTicket(this.ticketId);
+    }
+
+    public static Ticket getTicketFromUUID(UUID ticketID){
+        Ticket ticket = null;
+
+        try {
+
+            File ticketRunDir = new File(DockerManager.runDir, Ticket.commonPrefix + ticketID);
+            RunType runType = ApiConfig.getRunType(new File(ticketRunDir, ApiConfig.commonConfigName));
+
+            ticket = switch (runType){
+                case JAVA -> new JavaTicket(ticketID, 1);
+                case PYTHON -> new PythonTicket(ticketID, 1);
+                default -> null;
+            };
+
+
+        } catch (FileNotFoundException e){
+            dbl.log("Config not found voiding ticket");
+            PsqlInterface.updateTicketStatus(ticketID, TicketStatus.VOIDED);
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        } catch (ParseException e){
+            e.printStackTrace();
+        }
+
+        return ticket;
     }
 }
