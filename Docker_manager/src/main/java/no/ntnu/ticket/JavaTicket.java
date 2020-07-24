@@ -25,7 +25,7 @@ public class JavaTicket extends Ticket {
         super(ticketId);
 
         // TODO: Chek whether or not to have these on a network mtp segmentation
-        runCommand = new DockerRunCommand(super.commonName, super.commonName, gpu);
+        runCommand = new DockerRunCommand(super.commonName, super.commonName);
         runCommand.setNetwork("ticketNetwork");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.runDir).getAbsolutePath(),"/app/");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.saveDir).getAbsolutePath(),"/save/");
@@ -44,7 +44,7 @@ public class JavaTicket extends Ticket {
         dbl.log("maven install requested");
         String containerName = "builder_" + ticket.commonName;
         DockerRunCommand installCmd = new DockerRunCommand(
-                "maven_install_image", containerName, 0);
+                "maven_install_image", containerName);
 
         installCmd.setNetwork("ticketNetwork");
         installCmd.addVolume(DockerManager.translateSaveDataFileToHostFile(JavaTicket.m2RepoDir).getAbsolutePath(),"/root/.m2/repository");

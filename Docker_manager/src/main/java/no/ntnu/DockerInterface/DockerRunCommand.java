@@ -15,7 +15,6 @@ public class DockerRunCommand extends DockerCommand {
 
     private HashMap<String,String> volumes = new HashMap<>();
     private HashMap<String,String> envVariables = new HashMap<>();
-    private int gpu = 0;
     private String image;
     private String containerName;
     private String network;
@@ -25,12 +24,10 @@ public class DockerRunCommand extends DockerCommand {
      * Creates a new runCommand
      * @param image the image to build from
      * @param containerName the name to give the container while running
-     * @param gpu -- tbd --
      */
-    public DockerRunCommand(String image, String containerName, int gpu) {
+    public DockerRunCommand(String image, String containerName) {
         this.image = image;
         this.containerName = containerName;
-        this.gpu = gpu;
         this.network = "host";
     }
 
@@ -60,14 +57,9 @@ public class DockerRunCommand extends DockerCommand {
         this.network = network;
     }
 
-
-
-    // TODO: decide how to finally handle this.
-    public int getGpu() {
-        return gpu;
-    }
-    public void setGpu(int gpu) {
-        this.gpu = gpu;
+    private Vector<String> resourceAllocationParts;
+    public void setResourceAllocationParts(Vector<String>  commandParts){
+        this.resourceAllocationParts = commandParts;
     }
 
 
@@ -93,16 +85,11 @@ public class DockerRunCommand extends DockerCommand {
 
         commandParts.add("--name " + this.containerName);
 
-        // gpu
-        switch (this.gpu){
-            case -1:
-                commandParts.add("--gpus all");
-                break;
-            case 0:
-                break;
-            default:
-                commandParts.add("--gpus " + this.gpu);
+        // compute resources
+        if (this.resourceAllocationParts != null){
+            commandParts.addAll(this.resourceAllocationParts);
         }
+
 
         // network
         if (network != null){

@@ -20,7 +20,7 @@ public class PythonTicket extends Ticket {
 
     public PythonTicket(UUID ticketId, int gpu) {
         super(ticketId);
-        runCommand = new DockerRunCommand(super.commonName, super.commonName, gpu);
+        runCommand = new DockerRunCommand(super.commonName, super.commonName);
         runCommand.setNetwork("ticketNetwork");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.runDir).getAbsolutePath(),"/app/");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.saveDir).getAbsolutePath(),"/save/");
