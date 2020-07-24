@@ -82,6 +82,7 @@ services:
 
     environment:
       SAVE_DATA_SYS_PATH: $PWD/save_data
+      GPUS: 1
 
     volumes:
     - type: bind

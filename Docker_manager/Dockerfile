@@ -10,6 +10,10 @@ ENV POSGRESS_USER="docker"
 ENV POSGRESS_PASSWORD="mysecretpassword"
 
 ENV SAVE_DATA_SYS_PATH="not_set"
+
+# resources
+ENV GPUS="1"
+
 COPY ./target/Docker_manager-1.0-SNAPSHOT-jar-with-dependencies.jar /app/docker_manager.jar
 
 CMD java -jar /app/docker_manager.jar

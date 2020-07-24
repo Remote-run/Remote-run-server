@@ -3,20 +3,26 @@ package no.ntnu.ticket;
 import no.ntnu.DockerInterface.DockerFunctions;
 import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
+import no.ntnu.Main;
 import no.ntnu.config.ApiConfig;
+import no.ntnu.dockerComputeRecources.ResourceType;
 import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.exeptions.TicketErrorException;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
+import no.ntnu.util.Mail;
 import org.json.simple.parser.ParseException;
 
+import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.UUID;
+import java.util.Vector;
 
 /**
  * The representation of a run request
@@ -50,6 +56,12 @@ public abstract class Ticket {
 
 
     private TicketStatus state = TicketStatus.WAITING;
+
+    /**
+     * A map showing what resources this ticket needs to run
+     */
+    private HashMap<ResourceType, Integer> requiredResources = new HashMap<>();
+    private Vector<String> resourceAllocationCommand = new Vector<>();
 
     // to ensure no double run
     private boolean isRunning = false;
@@ -94,8 +106,24 @@ public abstract class Ticket {
         saveDir = new File(DockerManager.saveDir, commonName);
         outFile = new File(DockerManager.sendDir,commonName + ".zip");
         logDir = new File(DockerManager.logDir, commonName);
+        saveDir.mkdir();
         logDir.mkdir();
 
+        // TODO: rcource managment can be tweaked here
+        requiredResources.put(ResourceType.GPU, 1);
+
+    }
+
+    public HashMap<ResourceType, Integer> getRequiredResources() {
+        return requiredResources;
+    }
+
+    /**
+     * Sets the contents of the resources allocation part of the docker run command of the ticket
+     * @param commandParts the contents of the resources allocation part of the docker run command of the ticket.
+     */
+    public void setResourceAllocationCommand(Vector<String> commandParts){
+        resourceAllocationCommand = commandParts;
     }
 
 
@@ -135,6 +163,7 @@ public abstract class Ticket {
                         }
 
                         DockerRunCommand runCommand = this.getStartCommand();
+                        runCommand.setResourceAllocationParts(this.resourceAllocationCommand);
 
                         runCommand.setErrorFile(new File(this.logDir, "run_error"));
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
@@ -231,8 +260,9 @@ public abstract class Ticket {
         System.out.println("// ############################################# //\n");
 
         try {
-            TicketDoneMail.sendMail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), this);
+            Compression.zip(logDir, new File(saveDir, "logs.zip"));
             Compression.zip(saveDir, outFile);
+            this.sendCompleteMail(voidReason);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -252,7 +282,7 @@ public abstract class Ticket {
             try {
                 Compression.zip(saveDir, outFile);
                 this.setState(TicketStatus.DONE);
-                TicketDoneMail.sendMail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), this);
+                this.sendCompleteMail(TicketExitReason.complete);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -292,5 +322,38 @@ public abstract class Ticket {
         }
 
         return ticket;
+    }
+
+
+    private void sendCompleteMail(TicketExitReason reason){
+        String subject = "";
+        String contents = "";
+        String dlLink = "https://remote-run.uials.no/download/" + commonName;
+        switch (reason){
+            case complete:
+                subject = "Your run ticket is complete";
+                contents = "your results can be downloaded from " + dlLink;
+                break;
+            case runError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case buildError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case mavenInstallError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case timeout:
+                subject = "";
+                contents = "";
+                break;
+        }
+        try {
+            Mail.sendGmail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), subject,contents);
+        } catch (ParseException | IOException e){}
+
     }
 }

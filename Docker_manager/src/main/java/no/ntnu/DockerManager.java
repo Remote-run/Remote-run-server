@@ -1,21 +1,17 @@
 package no.ntnu;
 
-import no.ntnu.config.ApiConfig;
-import no.ntnu.enums.RunType;
+import no.ntnu.DockerInterface.DockerGenericCommand;
+import no.ntnu.dockerComputeRecources.ComputeResource;
+import no.ntnu.dockerComputeRecources.GpuResource;
+import no.ntnu.dockerComputeRecources.ResourceManager;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.PsqlInterface;
-import no.ntnu.ticket.JavaTicket;
-import no.ntnu.ticket.PythonTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
-import org.json.simple.parser.ParseException;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,6 +51,9 @@ public class DockerManager {
     }
 
 
+    private ResourceManager resourceManager;
+
+
     public DockerManager(){
 
         // delete the files not belonging to any tickets.
@@ -77,7 +76,21 @@ public class DockerManager {
         buildHelpers.mkdir();
         sendDir.mkdir();
         buildHole.mkdir();
+
+        // builds the ticket network if it does not exist
+        DockerGenericCommand command = new DockerGenericCommand("docker network create ticketNetwork");
+        command.run();
+
+        int gpus = 0;
+        try{
+            gpus = Integer.parseInt(System.getenv("GPUS"));
+        } catch (NumberFormatException ignored){}
+
+        this.resourceManager = new ResourceManager(new ComputeResource[] {
+                new GpuResource(gpus),
+        });
     }
+
 
 
     /**
@@ -86,20 +99,18 @@ public class DockerManager {
     private final int queSize = 5;
 
 
-    /**
-     * How many ticket can run simultaniosly. this wil be removed and changed for a recource manager at some point
-     */
-    private final int runSlots = 1;
-
-    private ArrayList<Ticket> backlog = new ArrayList<>();
-    private ArrayList<Ticket> running = new ArrayList<>();
+    private Vector<Ticket> backlog = new Vector<>();
+    private Vector<Ticket> running = new Vector<>();
 
     public void mainLoop(){
         while (true){
             try {
-                this.pruneTickets();
-                this.updateQue();
-                this.updateRunning();
+                this.removeDoneTickets();
+                this.fillQue();
+                this.tryStartQueTickets();
+
+                dbl.log("backlog: ", backlog);
+                dbl.log("running: ", running);
 
 
 
@@ -116,21 +127,28 @@ public class DockerManager {
         }
     }
 
-    private void pruneTickets() throws SQLException {
+
+    private void removeDoneTickets() throws SQLException {
         // removes any ticket that are ether done or voided
-        this.running.removeAll(this.running.stream()
+        Vector<Ticket> doneRunning = this.running.stream()
                 .filter(Ticket::isDone)
-                .collect(Collectors.toCollection(ArrayList::new)));
+                .peek(this.resourceManager::freeTicketResources)
+                .collect(Collectors.toCollection(Vector::new));
+
+        this.running.removeAll(doneRunning);
 
 
         // if a ticket was voided on install it is removed here
-        this.backlog.removeAll(this.backlog.stream()
+        Vector<Ticket> doneQueuing = this.backlog.stream()
                 .filter(Ticket::isDone)
-                .collect(Collectors.toCollection(ArrayList::new)));
+                .collect(Collectors.toCollection(Vector::new));
+
+        this.backlog.removeAll(doneQueuing);
 
 
 
         // this should tecnicly never be nececery
+        // TODO: remove??
 
         // there should be no item in local running and not in db
         UUID[] que = PsqlInterface.getTicketsWithStatus(TicketStatus.RUNNING);
@@ -146,28 +164,26 @@ public class DockerManager {
                 .noneMatch(ticket -> Arrays.binarySearch(que,ticket) > 0);
     }
 
-    private void updateRunning(){
-        while (this.running.size() < this.runSlots && this.backlog.size() > 0){
-            // super do not like... but probably wont start spinnining so ok
-            this.startTicket(backlog.get(0));
-        }
+    private void tryStartQueTickets(){
+        Vector<Ticket> added = resourceManager.tryStartQue(this.backlog);
+
+        added.forEach(Ticket::run);
+
+        this.backlog.removeAll(added);
+        this.running.addAll(added);
     }
 
-    private void updateQue()throws SQLException{
+    private void fillQue()throws SQLException{
         if (this.backlog.size() < this.queSize){
             UUID[] sortedQue = PsqlInterface.getTicketsByPriority();
-            dbl.log("backlog: ", backlog.toString());
-            dbl.log("running: ", running.toString());
 
             for (UUID id: sortedQue){
                 if (this.backlog.size() < this.queSize && id != null){
                     if (Stream.of(backlog, running)
                             .flatMap(tickets -> tickets.stream().map(Ticket::getTicketId))
                             .noneMatch(id::equals)){
-                        dbl.log(id);
                         this.addToBacklog(id);
                     }
-
                 } else {
                     break;
                 }
@@ -175,9 +191,8 @@ public class DockerManager {
         }
     }
 
-    //remove if nothing more is added fluff is unececery
     private void addToBacklog(UUID ticketID){
-        dbl.log("added ticket:", ticketID);
+        dbl.log("added ticket to backlog:", ticketID);
 
         Ticket ticket = Ticket.getTicketFromUUID(ticketID);
         if (ticket != null){
@@ -187,15 +202,6 @@ public class DockerManager {
             this.backlog.add(ticket);
         }
     }
-
-    private void startTicket(Ticket ticket){
-        // Todo: put the recource managment stuff here
-        dbl.log("started ticket:", ticket.getTicketId());
-        ticket.run();
-        this.backlog.remove(ticket);
-        this.running.add(ticket);
-    }
-
 
 
 
