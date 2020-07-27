@@ -20,6 +20,6 @@ RUN ln -s save_data /save
 ENV runfile="main.py"
 ENV args=""
 
-CMD python3 $runfile $args
+CMD python3 $runfile $args  | tee /save/sdout
 
 

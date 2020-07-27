@@ -1,29 +1,27 @@
-package no.ntnu.dockerComputeRecources;
+package no.ntnu.dockerComputeRecources.ResourceTypes;
 
+import no.ntnu.dockerComputeRecources.ResourceType;
 import no.ntnu.util.DebugLogger;
 
-import java.util.Arrays;
 import java.util.Vector;
 
-public class GpuResource implements ComputeResource{
-
-    private DebugLogger dbl = new DebugLogger(false);
+public class GpuResource implements ComputeResource {
 
     private final ResourceType resourceType = ResourceType.GPU;
     private final String commandString = "--gpus '\"device=%s\"'";
-
-    private int numGpus;
-    private String[] gpuSlots;
+    private final DebugLogger dbl = new DebugLogger(false);
+    private final int numGpus;
+    private final String[] gpuSlots;
 
     public GpuResource(int numGpus) {
         this.numGpus = numGpus;
         this.gpuSlots = new String[numGpus];
     }
 
-    private Vector<Integer> getFreeGpuSlots(){
+    private Vector<Integer> getFreeGpuSlots() {
         Vector<Integer> freeSlots = new Vector<>();
         for (int i = 0; i < gpuSlots.length; i++) {
-            if (gpuSlots[i] == null){
+            if (gpuSlots[i] == null) {
                 freeSlots.add(i);
             }
         }
@@ -74,21 +72,21 @@ public class GpuResource implements ComputeResource{
     @Override
     public String useResource(int amount, String key) {
         dbl.log("requesting resource: ", amount, key);
-        if (this.isAmountResourceFree(amount)){
+        if (this.isAmountResourceFree(amount)) {
             dbl.log("is free providing");
             Vector<Integer> freeSlots = getFreeGpuSlots();
             String commandPart = "";
             for (int i = 0; i < amount; i++) {
-                dbl.log(freeSlots.size(),freeSlots);
-                dbl.log(gpuSlots.length ,gpuSlots);
+                dbl.log(freeSlots.size(), freeSlots);
+                dbl.log(gpuSlots.length, gpuSlots);
                 gpuSlots[freeSlots.get(i)] = key;
-                commandPart += "," + freeSlots.get(i) ;
-            };
+                commandPart += "," + freeSlots.get(i);
+            }
 
             commandPart = commandPart.replaceFirst(",", "");
 
             return String.format(this.commandString, commandPart);
-        } else  {
+        } else {
             return null;
         }
     }
@@ -101,8 +99,8 @@ public class GpuResource implements ComputeResource{
     @Override
     public void freeResource(String key) {
         for (int i = 0; i < gpuSlots.length; i++) {
-            if (gpuSlots[i] != null){
-                if (gpuSlots[i].equals(key)){
+            if (gpuSlots[i] != null) {
+                if (gpuSlots[i].equals(key)) {
                     gpuSlots[i] = null;
                 }
             }

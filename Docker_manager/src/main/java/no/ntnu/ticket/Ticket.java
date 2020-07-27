@@ -13,7 +13,7 @@ import no.ntnu.sql.PsqlInterface;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
 import no.ntnu.util.Mail;
-import org.json.simple.parser.ParseException;
+
 
 import javax.mail.internet.MimeMessage;
 import java.io.File;
@@ -317,8 +317,6 @@ public abstract class Ticket {
             e.printStackTrace();
         } catch (IOException e){
             e.printStackTrace();
-        } catch (ParseException e){
-            e.printStackTrace();
         }
 
         return ticket;
@@ -353,7 +351,7 @@ public abstract class Ticket {
         }
         try {
             Mail.sendGmail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), subject,contents);
-        } catch (ParseException | IOException e){}
+        } catch (IOException e){}
 
     }
 }

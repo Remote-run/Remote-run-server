@@ -1,8 +1,8 @@
 package no.ntnu;
 
 import no.ntnu.DockerInterface.DockerGenericCommand;
-import no.ntnu.dockerComputeRecources.ComputeResource;
-import no.ntnu.dockerComputeRecources.GpuResource;
+import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
+import no.ntnu.dockerComputeRecources.ResourceTypes.GpuResource;
 import no.ntnu.dockerComputeRecources.ResourceManager;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.PsqlInterface;
