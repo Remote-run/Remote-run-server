@@ -38,8 +38,8 @@ public class PythonTicket extends Ticket {
     }
 
     @Override
-    protected ApiConfig getTicketConfig() {
-        return null;
+    public ApiConfig getTicketConfig() {
+        return ticketConfig;
     }
 
     @Override

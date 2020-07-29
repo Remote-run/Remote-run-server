@@ -63,7 +63,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                     if (!item.isFormField()) {
                         UUID ticket_id = java.util.UUID.randomUUID();
-                        File uploadedFile = new File(tmpdir, ticket_id.toString() + ".gz");
+                        File uploadedFile = new File(tmpdir, ticket_id.toString() + ".zip.gz");
 
                         item.write(uploadedFile);
                         dbl.log("write ok");

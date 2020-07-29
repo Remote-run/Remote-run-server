@@ -24,6 +24,7 @@ services:
 
     networks:
       db_network:
+        ipv4_address: "10.10.200.200"
 
     ports:
       - target: 5432
@@ -116,9 +117,6 @@ services:
       context: ./DockerFiles/nginx_certbot
       dockerfile: Dockerfile
 
-
-
-
     volumes:
       - type: volume
         source: nginx_data
@@ -145,16 +143,19 @@ services:
     restart: unless-stopped
 
 
-
 networks:
   db_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.10.200.0/24"
     internal: true
-
 
   frontend:
   backend:
   ticketNetwork:
     external: true
+
 
 volumes:
   db_data:

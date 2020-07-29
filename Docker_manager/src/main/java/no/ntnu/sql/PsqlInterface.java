@@ -17,7 +17,7 @@ public class PsqlInterface {
     private static final String dbUser = System.getenv("POSGRESS_USER");
     private static final String dbPassword = System.getenv("POSGRESS_PASSWORD");
 
-    private static final DebugLogger dbl = new DebugLogger(false);
+    protected static final DebugLogger dbl = new DebugLogger(false);
 
 
     private enum ticketsColumns{

@@ -1,13 +1,13 @@
 package no.ntnu;
 
 import no.ntnu.DockerInterface.DockerGenericCommand;
-import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
-import no.ntnu.dockerComputeRecources.ResourceTypes.GpuResource;
 import no.ntnu.dockerComputeRecources.ResourceManager;
+import no.ntnu.dockerComputeRecources.YamlParser;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
+import no.ntnu.util.DeleteWatcher;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -81,14 +81,8 @@ public class DockerManager {
         DockerGenericCommand command = new DockerGenericCommand("docker network create ticketNetwork");
         command.run();
 
-        int gpus = 0;
-        try{
-            gpus = Integer.parseInt(System.getenv("GPUS"));
-        } catch (NumberFormatException ignored){}
 
-        this.resourceManager = new ResourceManager(new ComputeResource[] {
-                new GpuResource(gpus),
-        });
+        this.resourceManager = new ResourceManager(YamlParser.getSystemResources());
     }
 
 
@@ -207,6 +201,7 @@ public class DockerManager {
 
     public static void main( String[] args ) {
         DockerManager manager = new DockerManager();
+        DeleteWatcher deleteWatcher = new DeleteWatcher();
         manager.mainLoop();
     }
 }

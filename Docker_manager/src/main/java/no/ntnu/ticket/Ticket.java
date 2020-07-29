@@ -5,6 +5,7 @@ import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
 import no.ntnu.Main;
 import no.ntnu.config.ApiConfig;
+import no.ntnu.dockerComputeRecources.ResourceManager;
 import no.ntnu.dockerComputeRecources.ResourceType;
 import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
@@ -57,10 +58,7 @@ public abstract class Ticket {
 
     private TicketStatus state = TicketStatus.WAITING;
 
-    /**
-     * A map showing what resources this ticket needs to run
-     */
-    private HashMap<ResourceType, Integer> requiredResources = new HashMap<>();
+
     private Vector<String> resourceAllocationCommand = new Vector<>();
 
     // to ensure no double run
@@ -109,14 +107,9 @@ public abstract class Ticket {
         saveDir.mkdir();
         logDir.mkdir();
 
-        // TODO: rcource managment can be tweaked here
-        requiredResources.put(ResourceType.GPU, 1);
-
     }
 
-    public HashMap<ResourceType, Integer> getRequiredResources() {
-        return requiredResources;
-    }
+
 
     /**
      * Sets the contents of the resources allocation part of the docker run command of the ticket
@@ -225,7 +218,7 @@ public abstract class Ticket {
 
 
     //todo: mabye remove
-    protected abstract ApiConfig getTicketConfig();
+    public abstract ApiConfig getTicketConfig();
 
 
     /**

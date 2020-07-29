@@ -9,9 +9,10 @@ import java.util.Map;
 import java.util.Vector;
 
 public class ResourceManager {
-    private final DebugLogger dbl = new DebugLogger(true);
+    private final DebugLogger dbl = new DebugLogger(false);
 
     private final HashMap<ResourceType, ComputeResource> resourceMap = new HashMap<>();
+    private final YamlParser yamlParser = new YamlParser();
 
 
     public ResourceManager(ComputeResource[] resources) {
@@ -62,15 +63,22 @@ public class ResourceManager {
      */
     private boolean areTicketResourcesFree(Ticket ticket) {
         boolean isFree = true;
-        for (Map.Entry<ResourceType, Integer> entry : ticket.getRequiredResources().entrySet()) {
+        dbl.log("------ resourse for ticket ", ticket.getTicketId());
+        for (Map.Entry<ResourceType, Integer> entry : getTicketResourceMap(ticket).entrySet()) {
+            dbl.log(entry.getKey().name(), entry.getValue());
             if (resourceMap.containsKey(entry.getKey())) {
-                if (!resourceMap.get(entry.getKey()).isAmountResourceFree(entry.getValue())) {
+                if (!resourceMap.get(entry.getKey()).isAmountResourceFree(entry.getValue()) && entry.getValue() != -1) {
                     isFree = false;
                     break;
                 }
             }
         }
+
         return isFree;
+    }
+
+    private HashMap<ResourceType, Integer> getTicketResourceMap(Ticket ticket){
+        return yamlParser.translateTicketKey(ticket.getTicketConfig().getResourceKey());
     }
 
     /**
@@ -82,7 +90,7 @@ public class ResourceManager {
     private Vector<String> allocateTicketResources(Ticket ticket) {
         Vector<String> commandParts = new Vector<>();
         if (this.areTicketResourcesFree(ticket)) {
-            for (Map.Entry<ResourceType, Integer> entry : ticket.getRequiredResources().entrySet()) {
+            for (Map.Entry<ResourceType, Integer> entry : getTicketResourceMap(ticket).entrySet()) {
                 if (resourceMap.containsKey(entry.getKey())) {
                     commandParts.add(
                             resourceMap.get(entry.getKey()).useResource(entry.getValue(), ticket.getCommonName())

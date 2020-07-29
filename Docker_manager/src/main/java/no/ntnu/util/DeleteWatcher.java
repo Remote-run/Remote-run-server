@@ -1,5 +1,6 @@
-package no.ntnu;
+package no.ntnu.util;
 
+import no.ntnu.DockerManager;
 import no.ntnu.sql.PsqlInterface;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
@@ -20,16 +21,9 @@ public class DeleteWatcher {
      */
     private int checkInterval = 3600;
 
-    private static DeleteWatcher instance;
 
-    public static DeleteWatcher getInstance(){
-        if (instance == null){
-            instance = new DeleteWatcher();
-        }
-        return instance;
-    }
 
-    private DeleteWatcher(){
+    public DeleteWatcher(){// todo: nonononononono change
         Thread watchTread = new Thread(this::watchLoop);
         watchTread.start();
     }
@@ -49,6 +43,11 @@ public class DeleteWatcher {
                     if (kill_at < currentTime){
                         dbl.log("Deleting ticket files for : ", uuid);
                         deleteTicketFiles(uuid);
+                        try {
+                            PsqlInterface.cleanTicket(uuid);
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }
                     }
                 });
                 Thread.sleep(checkInterval * 100);
