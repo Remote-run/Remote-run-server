@@ -1,45 +1,51 @@
 package no.ntnu.sql;
 
+import no.ntnu.dockerComputeRecources.ComputeResources;
 import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
-import no.ntnu.ticket.Ticket;
-import no.ntnu.util.DebugLogger;
+import no.ntnu.ticket.TicketExitReason;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class PsqlInterface {
-    private static final String url = System.getenv("SQLURL");
-    private static final String dbUser = System.getenv("POSGRESS_USER");
-    private static final String dbPassword = System.getenv("POSGRESS_PASSWORD");
 
-    protected static final DebugLogger dbl = new DebugLogger(false);
+public class TicketDbFunctions extends PsqlDb {
 
 
-    private enum ticketsColumns{
-        id,
-        return_mail,
-        run_priority,
-        timestamp,
-        status
-    }
 
+    public static boolean setTicketResource(UUID uid, ComputeResources.ResourceKey resource) {
+        boolean keyAdded = false;
 
-    private static Connection tryConnectToDB(){
-        dbl.log("try connect to db", "url", url, "user", dbUser, "passwd", dbPassword);
-        Connection connection = null;
         try{
-            Class.forName("org.postgresql.Driver"); // i think this is to chek if the class exists
-            connection = DriverManager.getConnection(url, dbUser, dbPassword);
+            Connection connection = tryConnectToDB();
+            Statement statement = connection.createStatement();
+
+            // try to get the current resource key at the id
+            String query = String.format("SELECT * FROM resource_keys WHERE id = '%s'", resource.resourceId);
+            ResultSet resultSet = statement.executeQuery(query);
+            if (resultSet.next()){
+                // the key exist just give it to the ticket
+                resultSet.close();
+
+                dbl.log("making SQL query:\n", query);
+                statement.executeUpdate(query);
+                keyAdded = true;
+            }
+
+            statement.close();
+            connection.close();
+
         } catch (Exception e){
             e.printStackTrace();
         }
 
-        return connection;
+        return keyAdded;
+
     }
 
 
@@ -60,6 +66,7 @@ public class PsqlInterface {
     }
 
 
+
     public static void updateTicketStatus(UUID ticketNmr, TicketStatus ticketStatus) {
         try{
             Connection connection = tryConnectToDB();
@@ -69,20 +76,33 @@ public class PsqlInterface {
             dbl.log("making SQL query:\n", query);
             statement.executeUpdate(query);
 
-            if (ticketStatus == TicketStatus.DONE){
-                // the ticket is completed and is moved to the kill list
-                String killQuery = String.format("INSERT INTO out (id) VALUES ('%s');", ticketNmr);
-                dbl.log("making SQL query:\n", query);
-                statement.executeUpdate(killQuery);
-            }
 
             statement.close();
             connection.close();
         } catch (SQLException e){
             e.printStackTrace();
         }
+    }
+
+    public static void setTicketComplete(UUID ticketId, TicketExitReason exitReason) {
+        try{
+            Connection connection = tryConnectToDB();
+            Statement statement = connection.createStatement();
+
+            String query = String.format("DELETE FROM active_ticket WHERE ticket_id='%s';", ticketId);
+            dbl.log("making SQL query:\n", query);
+            statement.executeUpdate(query);
+
+            query = String.format("INSERT INTO out (id, exit_reason) VALUES ('%s', '%s');", ticketId, exitReason.name());
+            dbl.log("making SQL query:\n", query);
+            statement.executeUpdate(query);
 
 
+            statement.close();
+            connection.close();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 
     public static void cleanTicket(UUID ticketNmr) throws SQLException {
@@ -98,6 +118,8 @@ public class PsqlInterface {
     }
 
     public static TicketStatus getTicketStatus(UUID ticketId) throws SQLException{
+
+
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
@@ -143,7 +165,7 @@ public class PsqlInterface {
 
     }
 
-    public static HashMap<UUID, Long> getKillList() throws SQLException{
+    public static HashMap<UUID, Long> __getCompleteList() throws SQLException{
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
@@ -161,6 +183,17 @@ public class PsqlInterface {
 
         return tmpList;
     }
+
+    public static HashMap<UUID, Long> getCompleteList(){
+
+        String query = "SELECT * FROM out;";
+        HashMap<UUID, Long> tmpList = new HashMap<>();
+        query(query, resultSet -> tmpList.put(UUID.fromString(resultSet.getString("id")), resultSet.getLong("kill_at")));
+
+        return tmpList;
+    }
+
+
 
     public static HashMap<UUID, RunType> getRuntypes(UUID[] ids) throws SQLException{
         Connection connection = tryConnectToDB();
@@ -184,12 +217,19 @@ public class PsqlInterface {
     }
 
 
-
+    /**
+     * Returns the id off every ticket that is not in the out or staging table
+     * @return
+     * @throws SQLException
+     */
     public static UUID[] getTicketsByPriority() throws SQLException{
+
         Connection connection = tryConnectToDB();
         Statement statement = connection.createStatement();
 
-        String query = "SELECT id FROM tickets WHERE status = 'WAITING' ORDER BY run_priority ,timestamp ;";
+        String query = "SELECT id " +
+                "FROM tickets, s " +
+                "WHERE id IN (SELECT ticket_id FROM active_ticket UNION SELECT id FROM out) ORDER BY run_priority ,timestamp ;";
         ResultSet resultSet = statement.executeQuery(query);
 
         ArrayList<UUID> tmpList = new ArrayList<>();
