@@ -1,4 +1,4 @@
-package no.ntnu.dockerComputeRecources;
+package no.ntnu.dockerComputeRecources.ResourceTypes;
 
 public enum ResourceType {
 

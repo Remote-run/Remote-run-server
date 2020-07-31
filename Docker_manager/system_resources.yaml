@@ -1,4 +1,4 @@
-id: "SYSTEM"
-GPU: 1
-CPU: 20
-GIG_MEMORY: 40
+resourceId: "SYSTEM"
+gpuSlots: 1
+cpus: 20
+gigRam: 40

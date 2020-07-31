@@ -1,9 +1,9 @@
 keys:
-  - id: "DEFAULT"
-    GPU: 1
-    CPU: -1
-    GIG_MEMORY: 10
-  - id: "10CPU"
-    GPU: -1
-    CPU: 10
-    GIG_MEMORY: 10
+  - resourceId: "DEFAULT"
+    gpuSlots: 1
+    cpus: -1
+    gigRam: 10
+  - resourceId: "10CPU"
+    gpuSlots: -1
+    cpus: 10
+    gigRam: 10

@@ -10,14 +10,14 @@ services:
     env_file:
       - ./DockerFiles/posgress/db_login.env
 
-    environment:
-      PGDATA: "/var/lib/postgresql/data/pgdata"
+#    environment:
+#      PGDATA: "/var/lib/postgresql/data/pgdata"
 
 
     volumes:
-    - type: volume
-      source: db_data
-      target: /var/lib/postgresql/data
+#    - type: volume
+#      source: db_data
+#      target: /var/lib/postgresql/data
     - type: bind
       source: ./DockerFiles/posgress/db_init_scripts
       target: /docker-entrypoint-initdb.d
@@ -51,9 +51,10 @@ services:
       source: ./save_data/run
       target: /runvol
 
-    - type: volume
-      source: to_send
+    - type: bind
+      source: ./save_data/send
       target: /send
+
 
     networks:
       db_network:
@@ -95,9 +96,7 @@ services:
     - type: bind
       source: ./Docker_manager/RUNTYPES
       target: /runtypes
-    - type: volume
-      source: to_send
-      target: /send
+
 
     networks:
       db_network:
@@ -160,4 +159,3 @@ networks:
 volumes:
   db_data:
   nginx_data:
-  to_send:

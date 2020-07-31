@@ -1,9 +1,11 @@
 package no.ntnu.dockerComputeRecources.ResourceTypes;
 
-import no.ntnu.dockerComputeRecources.ResourceType;
 import no.ntnu.util.DebugLogger;
 
+import java.util.Arrays;
+import java.util.UUID;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 public class CpuResource implements ComputeResource {
 
@@ -14,11 +16,11 @@ public class CpuResource implements ComputeResource {
     private final String commandString =  "--cpuset-cpus=\"%s\"" ;
     private final DebugLogger dbl = new DebugLogger(false);
     private final int numCpus;
-    private final String[] cpuSlots;
+    private final UUID[] cpuSlots;
 
     public CpuResource(int numCpus) {
         this.numCpus = numCpus;
-        this.cpuSlots = new String[numCpus];
+        this.cpuSlots = new UUID[numCpus];
     }
 
     private Vector<Integer> getFreeCpuSlots() {
@@ -30,6 +32,26 @@ public class CpuResource implements ComputeResource {
         }
         dbl.log("Free Cpu slots: ", freeSlots);
         return freeSlots;
+    }
+
+    /**
+     * Returns all keys currently reserving some resource
+     *
+     * @return all keys currently reserving some resource
+     */
+    public UUID[] getKeys(){
+        return Arrays.stream(this.cpuSlots)
+                .distinct()
+                .toArray(UUID[]::new);
+    }
+
+    /**
+     * Returns the total amount of this compute resource, used or not.
+     *
+     * @return the total amount of this compute resource, used or not.
+     */
+    public int getTotalAmountOfResource(){
+        return numCpus;
     }
 
     /**
@@ -65,32 +87,49 @@ public class CpuResource implements ComputeResource {
 
     /**
      * Sets the given ammount of recource to the provided key.
-     * If there is not requested resource size is larger than the what's free null is returned.
+     * If there is not requested resource size is larger than the what's free false is returned.
      *
      * @param amount the ammount of resoure to request
      * @param key    the id for the user of this resource
-     * @return a string containing the docker command part that allocates the provided ammount of resource
+     * @return true if the provided ammount of resource can be reserved false if not
      */
     @Override
-    public String useResource(int amount, String key) {
+    public boolean useResource(int amount, UUID key) {
         dbl.log("requesting resource: ", amount, key);
         if (this.isAmountResourceFree(amount)) {
             dbl.log("is free providing");
             Vector<Integer> freeSlots = getFreeCpuSlots();
-            String commandPart = "";
             for (int i = 0; i < amount; i++) {
                 dbl.log(freeSlots.size(), freeSlots);
                 dbl.log(cpuSlots.length, cpuSlots);
                 cpuSlots[freeSlots.get(i)] = key;
-                commandPart += "," + freeSlots.get(i);
             }
 
-            commandPart = commandPart.replaceFirst(",", "");
-
-            return String.format(this.commandString, commandPart);
+            return true;
         } else {
-            return null;
+            return false;
         }
+    }
+
+    /**
+     * Retruns a string containing the docker command part that allocates the currently reserved ammount of resoure
+     * @param key the key whos resourses to get the command for
+     * @return a string containing the docker command part that allocates the currently reserved ammount of resoure
+     */
+    public String getResourceCommand(UUID key){
+        Vector<Integer> keyPos = new Vector<>();
+        for (int i = 0; i < this.cpuSlots.length; i++) {
+            if (cpuSlots[i] != null){
+                if (cpuSlots[i].equals(key)){
+                    keyPos.add(i);
+                }
+
+            }
+        }
+
+        return String.format(this.commandString, keyPos.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(",")));
     }
 
     /**
@@ -99,7 +138,7 @@ public class CpuResource implements ComputeResource {
      * @param key the key of the resources to free
      */
     @Override
-    public void freeResource(String key) {
+    public void freeResource(UUID key) {
         for (int i = 0; i < cpuSlots.length; i++) {
             if (cpuSlots[i] != null) {
                 if (cpuSlots[i].equals(key)) {

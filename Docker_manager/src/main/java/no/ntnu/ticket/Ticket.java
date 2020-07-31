@@ -3,27 +3,22 @@ package no.ntnu.ticket;
 import no.ntnu.DockerInterface.DockerFunctions;
 import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
-import no.ntnu.Main;
 import no.ntnu.config.ApiConfig;
+import no.ntnu.dockerComputeRecources.ComputeResources;
 import no.ntnu.dockerComputeRecources.ResourceManager;
-import no.ntnu.dockerComputeRecources.ResourceType;
 import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.exeptions.TicketErrorException;
-import no.ntnu.sql.PsqlInterface;
+import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
-import no.ntnu.util.Mail;
 
 
-import javax.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.UUID;
-import java.util.Vector;
 
 /**
  * The representation of a run request
@@ -59,7 +54,24 @@ public abstract class Ticket {
     private TicketStatus state = TicketStatus.WAITING;
 
 
-    private Vector<String> resourceAllocationCommand = new Vector<>();
+    private ComputeResources.ResourceKey resourceKey = ComputeResources.defaultKey;
+
+
+    public ComputeResources.ResourceKey getResourceKey() {
+        if (this.resourceKey.resourceId.equals(ComputeResources.defaultKey.resourceId)){
+            try {
+                dbl.log(this.getRunTypeConfig());
+                dbl.log(this.getRunTypeConfig().getResourceKey());
+                resourceKey = ComputeResources.TranslateComputeResourceKey(this.getRunTypeConfig().getResourceKey());
+            } catch (Exception e){
+                dbl.log("error getting the resource key ");
+            }
+
+        }
+
+        return resourceKey;
+    }
+
 
     // to ensure no double run
     private boolean isRunning = false;
@@ -86,17 +98,20 @@ public abstract class Ticket {
      * @param state the new state of the ticket
      */
     public void setState(TicketStatus state) {
-        System.out.println(state);
+        dbl.log(state);
         this.state = state;
-        PsqlInterface.updateTicketStatus(ticketId, state);
+        TicketDbFunctions.updateTicketStatus(ticketId, state);
 
     }
+
+
 
     /**
      * Creates a ticket
      * @param ticketId the id to give the ticket
+     * @param safeBuild
      */
-    protected Ticket(UUID ticketId) {
+    protected Ticket(UUID ticketId, Boolean safeBuild) {
         dbl.log("NEW TICKET ", ticketId);
         this.ticketId = ticketId;
         this.commonName = Ticket.commonPrefix + ticketId;
@@ -106,31 +121,41 @@ public abstract class Ticket {
         logDir = new File(DockerManager.logDir, commonName);
         saveDir.mkdir();
         logDir.mkdir();
+        try{
+            this.state = TicketDbFunctions.getTicketStatus(ticketId);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
 
+
+
+
+        // TODO: this has to change its needed but it shold not be run on every ticket build
+        if (safeBuild){
+            switch (this.state) {
+                case INSTALLING, READY, RUNNING -> {
+                    DockerFunctions.cleanTicket(ticketId);
+                    this.setState(TicketStatus.WAITING);
+                }
+            }
+        }
     }
 
 
-
-    /**
-     * Sets the contents of the resources allocation part of the docker run command of the ticket
-     * @param commandParts the contents of the resources allocation part of the docker run command of the ticket.
-     */
-    public void setResourceAllocationCommand(Vector<String> commandParts){
-        resourceAllocationCommand = commandParts;
-    }
-
+    private ResourceManager usedResourceManager;
 
     /**
      * Starts the build -> run -> save cycle. If the image is already bult it wil not be rebuilt
      *
      * This wil spawn another thread and will not block
      */
-    public void run() {
+    public void run(ResourceManager resourceManager) {
         // avoid potentially running doubble
         if (this.isRunning){
             // todo: this shold throw an exeption
             return;
         }
+        this.usedResourceManager = resourceManager;
 
         this.isRunning = true;
 
@@ -156,7 +181,7 @@ public abstract class Ticket {
                         }
 
                         DockerRunCommand runCommand = this.getStartCommand();
-                        runCommand.setResourceAllocationParts(this.resourceAllocationCommand);
+                        runCommand.setResourceAllocationParts(resourceManager.getTicketAllocationCommand(this));
 
                         runCommand.setErrorFile(new File(this.logDir, "run_error"));
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
@@ -195,6 +220,21 @@ public abstract class Ticket {
     }
 
     /**
+     * returns the runType api config of the the ticket. 
+     * If no config is found null is returned and the ticket is voided
+     * 
+     * @return returns the runType api config of the the ticket. 
+     */
+    public ApiConfig getTicketApiConfig(){
+        // todo: remove this and do this opperation in the constructor
+        ApiConfig apiConfig = getRunTypeConfig();
+        if (apiConfig == null){
+            //this.voidTicket(TicketExitReason.buildError);
+        }
+        return apiConfig;
+    }
+
+    /**
      * Return whether or not the ticket is don executing that is if it's done or voided
      * @return Whether or not the ticket is don executing.
      */
@@ -216,9 +256,11 @@ public abstract class Ticket {
      */
     protected abstract DockerRunCommand getStartCommand();
 
-
-    //todo: mabye remove
-    public abstract ApiConfig getTicketConfig();
+    /**
+     * returns the runType api config of the the ticket
+     * @return the runType api config of the the ticket
+     */
+    protected abstract ApiConfig getRunTypeConfig();
 
 
     /**
@@ -247,18 +289,20 @@ public abstract class Ticket {
      * the ticket wil be removed and the owner notified
      */
     private void voidTicket(TicketExitReason voidReason) {
-        this.setState(TicketStatus.VOIDED);
+
         System.out.println("\n// ############### TICKET VOIDED ############### //");
         System.out.println("ticket id: " + this.ticketId);
+        System.out.println("void reason: " + voidReason.name());
         System.out.println("// ############################################# //\n");
 
         try {
             Compression.zip(logDir, new File(saveDir, "logs.zip"));
             Compression.zip(saveDir, outFile);
-            this.sendCompleteMail(voidReason);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        this.setState(TicketStatus.VOIDED);
+        this.cleanTicket(voidReason);
 
     }
 
@@ -275,7 +319,7 @@ public abstract class Ticket {
             try {
                 Compression.zip(saveDir, outFile);
                 this.setState(TicketStatus.DONE);
-                this.sendCompleteMail(TicketExitReason.complete);
+                this.cleanTicket(TicketExitReason.complete);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -284,12 +328,33 @@ public abstract class Ticket {
             dbl.log("RUN ERROR FOR TICKET ID:", ticketId);
             this.voidTicket(TicketExitReason.runError);
         }
-
-        // ether way remove the images
-        DockerFunctions.cleanTicket(this.ticketId);
     }
 
-    public static Ticket getTicketFromUUID(UUID ticketID){
+    private void cleanTicket(TicketExitReason exitReason){
+        DockerFunctions.cleanTicket(this.ticketId);
+        TicketDbFunctions.setTicketComplete(this.ticketId, exitReason);
+        if (this.usedResourceManager != null){
+            this.usedResourceManager.freeTicketResources(this);
+        }
+    }
+
+    public static Ticket getTicketFromUUID(UUID ticketID) {
+        return getTicketFromUUID(ticketID, false);
+    }
+
+    /**
+     * Generates the correct ticket type for the ticket with the given id.
+     *
+     * This can ether be done un-safely that is not removing whatever progress this ticket has already done, or safely
+     * which is basicly resetting the ticket progress
+     *
+     * if the ticket encounters an error while budding or the id does not exist in the db null is returned
+     *
+     * @param ticketID the id of the ticket to generate
+     * @param safeBuild weather to build safely or not
+     * @return The ticket if successful in building null if not
+     */
+    public static Ticket getTicketFromUUID(UUID ticketID, boolean safeBuild){
         Ticket ticket = null;
 
         try {
@@ -298,15 +363,15 @@ public abstract class Ticket {
             RunType runType = ApiConfig.getRunType(new File(ticketRunDir, ApiConfig.commonConfigName));
 
             ticket = switch (runType){
-                case JAVA -> new JavaTicket(ticketID, 1);
-                case PYTHON -> new PythonTicket(ticketID, 1);
+                case JAVA -> new JavaTicket(ticketID, safeBuild);
+                case PYTHON -> new PythonTicket(ticketID, safeBuild);
                 default -> null;
             };
 
 
         } catch (FileNotFoundException e){
             dbl.log("Config not found voiding ticket");
-            PsqlInterface.updateTicketStatus(ticketID, TicketStatus.VOIDED);
+            TicketDbFunctions.updateTicketStatus(ticketID, TicketStatus.VOIDED);
             e.printStackTrace();
         } catch (IOException e){
             e.printStackTrace();
@@ -316,35 +381,5 @@ public abstract class Ticket {
     }
 
 
-    private void sendCompleteMail(TicketExitReason reason){
-        String subject = "";
-        String contents = "";
-        String dlLink = "https://remote-run.uials.no/download/" + commonName;
-        switch (reason){
-            case complete:
-                subject = "Your run ticket is complete";
-                contents = "your results can be downloaded from " + dlLink;
-                break;
-            case runError:
-                subject = "Your run ticket encountered an error";
-                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
-                break;
-            case buildError:
-                subject = "Your run ticket encountered an error";
-                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
-                break;
-            case mavenInstallError:
-                subject = "Your run ticket encountered an error";
-                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
-                break;
-            case timeout:
-                subject = "";
-                contents = "";
-                break;
-        }
-        try {
-            Mail.sendGmail(ApiConfig.getReturnMail(new File(runDir, ApiConfig.commonConfigName)), subject,contents);
-        } catch (IOException e){}
 
-    }
 }

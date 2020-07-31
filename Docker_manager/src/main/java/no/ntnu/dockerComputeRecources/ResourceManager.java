@@ -1,6 +1,7 @@
 package no.ntnu.dockerComputeRecources;
 
 import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
+import no.ntnu.dockerComputeRecources.ResourceTypes.ResourceType;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
 
@@ -9,11 +10,13 @@ import java.util.Map;
 import java.util.Vector;
 
 public class ResourceManager {
-    private final DebugLogger dbl = new DebugLogger(false);
+    protected final DebugLogger dbl = new DebugLogger(false);
 
     private final HashMap<ResourceType, ComputeResource> resourceMap = new HashMap<>();
-    private final YamlParser yamlParser = new YamlParser();
 
+    protected HashMap<ResourceType, ComputeResource> getResourceMap() {
+        return resourceMap;
+    }
 
     public ResourceManager(ComputeResource[] resources) {
         for (ComputeResource resource : resources) {
@@ -21,23 +24,26 @@ public class ResourceManager {
         }
     }
 
+    /////////////////////////
+    //  local
+    /////////////////////////
+
     /**
-     * Iterates throgh the que and starts as many tickets as there are free resources to do
+     * Iterates throgh the que and returns a list with the tickets that can be started
+     * The resources for these tickets have been reseved with the current manager
      *
      * @param que the que of tickets to run
      * @return A vector containing the tickets from the que that where allocated resources for
      */
-    public Vector<Ticket> tryStartQue(Vector<Ticket> que) {
+    public Vector<Ticket> getStartQue(Vector<Ticket> que) {
         dbl.log("try add que", que);
         Vector<Ticket> allocated = new Vector<>();
         for (Ticket ticket : que) {
             dbl.log("ticket ", ticket);
             if (this.areTicketResourcesFree(ticket)) {
                 dbl.log("is added ", ticket);
-                Vector<String> commandParts = this.allocateTicketResources(ticket);
-                allocated.add(ticket);
-                if (commandParts != null) {
-                    ticket.setResourceAllocationCommand(commandParts);
+                if (this.allocateTicketResources(ticket)){
+                    allocated.add(ticket);
                 }
             }
         }
@@ -51,7 +57,7 @@ public class ResourceManager {
      */
     public void freeTicketResources(Ticket ticket) {
         for (ComputeResource resource : this.resourceMap.values()) {
-            resource.freeResource(ticket.getCommonName());
+            resource.freeResource(ticket.getTicketId());
         }
     }
 
@@ -61,10 +67,10 @@ public class ResourceManager {
      * @param ticket the ticket to check
      * @return true if the system has enough resources free to run the ticket
      */
-    private boolean areTicketResourcesFree(Ticket ticket) {
+    public boolean areTicketResourcesFree(Ticket ticket) {
         boolean isFree = true;
         dbl.log("------ resourse for ticket ", ticket.getTicketId());
-        for (Map.Entry<ResourceType, Integer> entry : getTicketResourceMap(ticket).entrySet()) {
+        for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
             dbl.log(entry.getKey().name(), entry.getValue());
             if (resourceMap.containsKey(entry.getKey())) {
                 if (!resourceMap.get(entry.getKey()).isAmountResourceFree(entry.getValue()) && entry.getValue() != -1) {
@@ -77,23 +83,42 @@ public class ResourceManager {
         return isFree;
     }
 
-    private HashMap<ResourceType, Integer> getTicketResourceMap(Ticket ticket){
-        return yamlParser.translateTicketKey(ticket.getTicketConfig().getResourceKey());
+
+
+    /**
+     * Reserve the amount of resource the provided ticket needs
+     *
+     * @param ticket the ticket to reserve the resources to
+     * @return true if sucsessfull false if not
+     */
+    protected boolean allocateTicketResources(Ticket ticket) {
+        boolean susses  = true;
+        if (this.areTicketResourcesFree(ticket)) {
+            for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
+                if (resourceMap.containsKey(entry.getKey())) {
+                    susses = susses && resourceMap.get(entry.getKey()).useResource(entry.getValue(), ticket.getTicketId());
+
+                }
+            }
+            return susses;
+        } else {
+            return susses;
+        }
     }
 
     /**
-     * Reserve the amount of resource the provided ticket deeds and return the run string to give docket to use these resources
+     * Returns the run string to give docker to use these resources
      *
-     * @param ticket the ticket to reserve the resources to
+     * @param ticket the ticket the resoures are reseved to
      * @return The run string to give to the DockerRunCommand to use the resources. null if the there aren't enough resources free
      */
-    private Vector<String> allocateTicketResources(Ticket ticket) {
+    public Vector<String> getTicketAllocationCommand(Ticket ticket) {
         Vector<String> commandParts = new Vector<>();
         if (this.areTicketResourcesFree(ticket)) {
-            for (Map.Entry<ResourceType, Integer> entry : getTicketResourceMap(ticket).entrySet()) {
+            for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
                 if (resourceMap.containsKey(entry.getKey())) {
                     commandParts.add(
-                            resourceMap.get(entry.getKey()).useResource(entry.getValue(), ticket.getCommonName())
+                            resourceMap.get(entry.getKey()).getResourceCommand(ticket.getTicketId())
                     );
                 }
             }
@@ -102,6 +127,19 @@ public class ResourceManager {
             return null;
         }
     }
+
+
+
+    /////////////////////////
+    //  manager
+    /////////////////////////
+
+
+    
+
+
+
+
 
 
 }

@@ -14,7 +14,8 @@ class PsqlDb {
     private static final String dbUser = System.getenv("POSGRESS_USER");
     private static final String dbPassword = System.getenv("POSGRESS_PASSWORD");
 
-    protected static final DebugLogger dbl = new DebugLogger(false);
+    protected static final DebugLogger allQueries = new DebugLogger(false);
+    protected static final DebugLogger errorQueries = new DebugLogger(true);
 
 
     protected enum ticketsColumns{
@@ -27,7 +28,7 @@ class PsqlDb {
 
 
     protected static Connection tryConnectToDB(){
-        dbl.log("try connect to db", "url", url, "user", dbUser, "passwd", dbPassword);
+        allQueries.log("try connect to db", "url", url, "user", dbUser, "passwd", dbPassword);
         Connection connection = null;
         try{
             Class.forName("org.postgresql.Driver"); // i think this is to chek if the class exists
@@ -41,37 +42,54 @@ class PsqlDb {
 
     protected static void sqlQuery(String query, ThrowingConsumer<ResultSet, SQLException> rowHandler){
         try{
-            Connection connection = tryConnectToDB();
-            Statement statement = connection.createStatement();
-
-            ResultSet resultSet = statement.executeQuery(query);
-            dbl.log("making SQL query:\n", query);
-
-            HashMap<UUID, RunType> tmpList = new HashMap<>();
-            while (resultSet.next()){
-                rowHandler.accept(resultSet);
-            }
-
-            resultSet.close();
-            statement.close();
-            connection.close();
+            sqlQueryUnCaught(query, rowHandler);
         } catch (SQLException e){
+            errorQueries.log("ERROR QUERY:", query);
             e.printStackTrace();
         }
     }
 
+    protected static void sqlQueryUnCaught(String query, ThrowingConsumer<ResultSet, SQLException> rowHandler) throws SQLException{
+
+        Connection connection = tryConnectToDB();
+        Statement statement = connection.createStatement();
+
+        allQueries.log("making SQL query:\n", query);
+        ResultSet resultSet = statement.executeQuery(query);
+
+
+        HashMap<UUID, RunType> tmpList = new HashMap<>();
+        while (resultSet.next()){
+            rowHandler.accept(resultSet);
+        }
+
+        resultSet.close();
+        statement.close();
+        connection.close();
+
+    }
+
+
+
     protected static void sqlUpdate(String query){
         try{
-            Connection connection = tryConnectToDB();
-            Statement statement = connection.createStatement();
-
-            statement.executeUpdate(query);
-            dbl.log("making SQL update:\n", query);
-
-            statement.close();
-            connection.close();
+            sqlUpdateUnCaught(query);
         } catch (SQLException e){
+            errorQueries.log("ERROR QUERY:", query);
             e.printStackTrace();
         }
+    }
+
+    protected static void sqlUpdateUnCaught(String query) throws SQLException{
+        Connection connection = tryConnectToDB();
+        Statement statement = connection.createStatement();
+
+        allQueries.log("making SQL update:\n", query);
+        statement.executeUpdate(query);
+
+
+        statement.close();
+        connection.close();
+
     }
 }

@@ -25,9 +25,13 @@ public class TicketDbFunctions extends PsqlDb {
             keyValid.set(true);
         });
 
+
+
         if (keyValid.get()){
             query = String.format("UPDATE tickets SET resource_key = '%s' WHERE id='%s';", resource.resourceId, uid);
             sqlUpdate(query);
+        } else {
+            errorQueries.log("tying to set non existing key:\n", query);
         }
 
         return keyAdded;
@@ -63,10 +67,10 @@ public class TicketDbFunctions extends PsqlDb {
         sqlUpdate(query);
     }
 
-    public static TicketStatus getTicketStatus(UUID ticketId) throws SQLException{
-        String query = String.format("SELECT status FROM tickets WHERE id = '%s'", ticketId.toString());
+    public static TicketStatus getTicketStatus(UUID ticketId) {
+        String query = String.format("SELECT status FROM tickets WHERE id = '%s';", ticketId.toString());
 
-        AtomicReference<String> statusStr = null;
+        AtomicReference<String> statusStr = new AtomicReference<>();
         sqlQuery(query,resultSet -> statusStr.set(resultSet.getString("status")));
         return TicketStatus.valueOf(statusStr.get());
     }
@@ -74,7 +78,7 @@ public class TicketDbFunctions extends PsqlDb {
 
 
     public static UUID[] getTicketsWithStatus(TicketStatus status){
-        String query = String.format("SELECT id FROM tickets WHERE status = '%s'", status.name());
+        String query = String.format("SELECT id FROM tickets WHERE status = '%s';", status.name());
         Vector<UUID> tmpList = new Vector<>();
         sqlQuery(query,resultSet -> tmpList.add(UUID.fromString(resultSet.getString("id"))));
 
@@ -91,11 +95,36 @@ public class TicketDbFunctions extends PsqlDb {
     }
 
 
+    public static HashMap<UUID, String[]> getCompleteButNotMailList(){
+
+        String query = "SELECT o.id, t.return_mail, o.exit_reason " +
+                "FROM out o " +
+                "left join tickets t on t.id = o.id " +
+                "WHERE mail_sent =FALSE;";
+        HashMap<UUID, String[]> tmpList = new HashMap<>();
+        sqlQuery(query, resultSet -> {
+            tmpList.put(
+                    UUID.fromString(resultSet.getString("id")),
+                    new String[]{
+                            resultSet.getString("return_mail"), resultSet.getString("exit_reason")
+                    });
+        });
+
+        return tmpList;
+    }
+
+    public static void setMailSent(UUID ticketId){
+
+        String query = String.format("UPDATE out SET mail_sent = TRUE WHERE id = '%s';", ticketId);
+        sqlUpdate(query);
+    }
+
+
 
     public static HashMap<UUID, RunType> getRuntypes(UUID[] ids){
 
         String idList = Arrays.stream(ids).map(UUID::toString).collect(Collectors.joining("','"));
-        String query = String.format("SELECT id, run_type FROM tickets WHERE id IN ('%s')", idList);
+        String query = String.format("SELECT id, run_type FROM tickets WHERE id IN ('%s');", idList);
 
         HashMap<UUID, RunType> tmpList = new HashMap<>();
         sqlQuery(query,resultSet -> tmpList.put(UUID.fromString(resultSet.getString("id")), RunType.valueOf(resultSet.getString("id"))));
@@ -113,12 +142,23 @@ public class TicketDbFunctions extends PsqlDb {
 
 
         String query = "SELECT id " +
-                "FROM tickets, s " +
-                "WHERE id IN (SELECT ticket_id FROM active_ticket UNION SELECT id FROM out) ORDER BY run_priority ,timestamp ;";
+                "FROM tickets " +
+                "WHERE id NOT IN (SELECT ticket_id FROM active_ticket UNION SELECT id FROM out) ORDER BY run_priority ,timestamp ;";
 
-        ArrayList<UUID> tmpList = new ArrayList<>();
+        Vector<UUID> tmpList = new Vector<>();
         sqlQuery(query,resultSet -> tmpList.add(UUID.fromString(resultSet.getString("id"))));
 
+        return tmpList.toArray(UUID[]::new);
+    }
+
+    public static UUID[] getWorkersActiveIds(UUID worker){
+        String query = "SELECT a.ticket_id " +
+                "FROM active_ticket a " +
+                "inner join tickets t on t.id = a.ticket_id " +
+                String.format("WHERE a.runner = '%s' ", worker) +
+                "ORDER BY t.run_priority ,t.timestamp ;";
+        Vector<UUID> tmpList = new Vector<>();
+        sqlQuery(query, resultSet -> tmpList.add(UUID.fromString(resultSet.getString("ticket_id"))));
         return tmpList.toArray(UUID[]::new);
     }
 

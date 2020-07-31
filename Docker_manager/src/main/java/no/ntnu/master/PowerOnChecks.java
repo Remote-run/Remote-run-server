@@ -1,10 +1,11 @@
-package no.ntnu;
+package no.ntnu.master;
 
 
 import no.ntnu.DockerInterface.DockerFunctions;
-import no.ntnu.enums.RunType;
+import no.ntnu.DockerManager;
 import no.ntnu.enums.TicketStatus;
-import no.ntnu.sql.PsqlInterface;
+import no.ntnu.sql.SystemDbFunctions;
+import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.FileUtils;
 
@@ -21,6 +22,7 @@ import java.util.Vector;
  *          - remove the run and logg files for the instances that are listed as runnin in the db to avoid conflict
  *          - add the conteiner network if dont exist
  *
+ * -- chek that there are no unused resource keys
  */
 public class PowerOnChecks {
 
@@ -69,7 +71,7 @@ public class PowerOnChecks {
     public static void removeUnusedFiles(){
         Vector<Ticket> toBacklog = new Vector<>();
         try {
-            UUID[] allTicketUUID = PsqlInterface.getAllTicketUUID();
+            UUID[] allTicketUUID = TicketDbFunctions.getAllTicketUUID();
             String[] commonTicketNames = Arrays.stream(allTicketUUID)
                     .map(uuid -> Ticket.commonPrefix + uuid)
                     .toArray(String[]::new);
@@ -116,6 +118,11 @@ public class PowerOnChecks {
         }
     }
 
+    public static void removeUnusedResourceKeys(){
+        SystemDbFunctions.removeUnusedResourceKeys();
+
+    }
+
 
     /**
      * Returns a vector with the id's of all ticket registerd with the given state
@@ -125,7 +132,7 @@ public class PowerOnChecks {
     private static Vector<Ticket> getTicketsWithState(TicketStatus status){
         Vector<Ticket> tickets = new Vector<>();
         try {
-            UUID[] ids = PsqlInterface.getTicketsWithStatus(status);
+            UUID[] ids = TicketDbFunctions.getTicketsWithStatus(status);
 
             if (ids.length != 0){
                 Arrays.stream(ids)

@@ -21,8 +21,8 @@ public class JavaTicket extends Ticket {
     private DockerRunCommand runCommand;
     private JavaApiConfig ticketConfig;
 
-    public JavaTicket(UUID ticketId, int gpu) {
-        super(ticketId);
+    public JavaTicket(UUID ticketId, Boolean safeBuild) {
+        super(ticketId, safeBuild);
 
         // TODO: Chek whether or not to have these on a network mtp segmentation
         runCommand = new DockerRunCommand(super.commonName, super.commonName);
@@ -31,6 +31,7 @@ public class JavaTicket extends Ticket {
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.saveDir).getAbsolutePath(),"/save/");
 
         ticketConfig = new JavaApiConfig(new File(super.runDir, ApiConfig.commonConfigName));
+        dbl.log("java api config ", ticketConfig);
     }
 
     /**
@@ -94,7 +95,7 @@ public class JavaTicket extends Ticket {
     }
 
     @Override
-    public ApiConfig getTicketConfig() {
+    public ApiConfig getRunTypeConfig() {
         return ticketConfig;
     }
 

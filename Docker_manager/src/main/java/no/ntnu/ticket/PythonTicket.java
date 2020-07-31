@@ -4,10 +4,8 @@ import no.ntnu.DockerInterface.DockerImageBuildCommand;
 import no.ntnu.DockerInterface.DockerRunCommand;
 import no.ntnu.DockerManager;
 import no.ntnu.config.ApiConfig;
-import no.ntnu.config.JavaApiConfig;
 import no.ntnu.config.PythonApiConfig;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.util.UUID;
 
@@ -18,8 +16,8 @@ public class PythonTicket extends Ticket {
     private DockerRunCommand runCommand;
     private PythonApiConfig ticketConfig;
 
-    public PythonTicket(UUID ticketId, int gpu) {
-        super(ticketId);
+    public PythonTicket(UUID ticketId, Boolean safeBuild) {
+        super(ticketId, safeBuild);
         runCommand = new DockerRunCommand(super.commonName, super.commonName);
         runCommand.setNetwork("ticketNetwork");
         runCommand.addVolume(DockerManager.translateSaveDataFileToHostFile(super.runDir).getAbsolutePath(),"/app/");
@@ -38,7 +36,7 @@ public class PythonTicket extends Ticket {
     }
 
     @Override
-    public ApiConfig getTicketConfig() {
+    public ApiConfig getRunTypeConfig() {
         return ticketConfig;
     }
 

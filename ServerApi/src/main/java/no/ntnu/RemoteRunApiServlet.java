@@ -17,7 +17,7 @@ import no.ntnu.config.ApiConfig;
 import no.ntnu.config.JavaApiConfig;
 import no.ntnu.config.PythonApiConfig;
 import no.ntnu.enums.RunType;
-import no.ntnu.sql.PsqlInterface;
+import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.util.Compression;
 import no.ntnu.util.DebugLogger;
 import org.apache.commons.fileupload.FileItem;
@@ -130,7 +130,7 @@ public class RemoteRunApiServlet extends HttpServlet {
 
                         //Files.move(usedDir.toPath(), .toPath(), StandardCopyOption.REPLACE_EXISTING );
                         dbl.log("saved at: ", new File(runDir, "ticket_" + ticket_id).getCanonicalPath());
-                        PsqlInterface.insertNewTicket(ticket_id, config.getRunType(),config.getReturnMail(),config.getPriority());
+                        TicketDbFunctions.insertNewTicket(ticket_id, config.getRunType(),config.getReturnMail(),config.getPriority());
 
 
                         dbl.log("Full ok");

@@ -1,12 +1,17 @@
-package no.ntnu.util;
+package no.ntnu.master;
 
+import no.ntnu.config.ApiConfig;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.ticket.Ticket;
+import no.ntnu.ticket.TicketExitReason;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
+import java.util.UUID;
 
 
 /*
@@ -58,6 +63,37 @@ public class Mail {
             //System.out.println("message sent successfully...");
 
         } catch (MessagingException e) {e.printStackTrace();}
+    }
+
+    public static void sendTicketDoneMail(UUID ticketId, String returnMail, TicketExitReason exitReason){
+        String subject = "";
+        String contents = "";
+        String dlLink = "https://remote-run.uials.no/download/" + Ticket.commonPrefix + ticketId;
+        switch (exitReason){
+            case complete:
+                subject = "Your run ticket is complete";
+                contents = "your results can be downloaded from " + dlLink;
+                break;
+            case runError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case buildError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case mavenInstallError:
+                subject = "Your run ticket encountered an error";
+                contents = "your results (if any) and the error logs can be downloaded from " + dlLink;
+                break;
+            case timeout:
+                subject = "";
+                contents = "";
+                break;
+        }
+
+        Mail.sendGmail(returnMail, subject,contents);
+
     }
 
 }
