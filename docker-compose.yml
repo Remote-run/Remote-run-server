@@ -10,27 +10,28 @@ services:
     env_file:
       - ./DockerFiles/posgress/db_login.env
 
-#    environment:
-#      PGDATA: "/var/lib/postgresql/data/pgdata"
+    environment:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
 
 
     volumes:
-#    - type: volume
-#      source: db_data
-#      target: /var/lib/postgresql/data
+    - type: volume
+      source: db_data
+      target: /var/lib/postgresql/data
     - type: bind
       source: ./DockerFiles/posgress/db_init_scripts
       target: /docker-entrypoint-initdb.d
 
     networks:
       db_network:
-        ipv4_address: "10.10.200.200"
+#        ipv4_address: "10.10.200.200"
 
     ports:
-      - target: 5432
-        published: 5432
-        protocol: tcp
-        mode: host
+      - "10.10.10.6:5432:5432"
+#      - target: 5432
+#        published: 5432
+#        protocol: tcp
+#        mode: host
 
     restart: unless-stopped
 
@@ -84,6 +85,7 @@ services:
 
     environment:
       SAVE_DATA_SYS_PATH: $PWD/save_data
+      IS_SLAVE: "FALSE"
       GPUS: 1
 
     volumes:
@@ -144,11 +146,11 @@ services:
 
 networks:
   db_network:
-    ipam:
-      driver: default
-      config:
-        - subnet: "10.10.200.0/24"
-    internal: true
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: "10.10.200.0/8"
+#    internal: false
 
   frontend:
   backend:
