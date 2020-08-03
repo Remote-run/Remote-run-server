@@ -120,7 +120,7 @@ public class RemoteRunApiServlet extends HttpServlet {
                         ProcessBuilder builder = new ProcessBuilder();
                         builder.command("bash", "-c",String.join(" ","mv", usedDir.getCanonicalPath(), new File(runDir, "ticket_" + ticket_id).getCanonicalPath()));
 
-                        builder.inheritIO();
+
                         Process process = builder.start();
                         process.waitFor();
                         dbl.log("mv exit value", process.exitValue());

@@ -2,6 +2,7 @@ package no.ntnu.dockerComputeRecources;
 
 import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
 import no.ntnu.dockerComputeRecources.ResourceTypes.ResourceType;
+import no.ntnu.ticket.RunnableTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
 
@@ -19,9 +20,13 @@ public class ResourceManager {
     }
 
     public ResourceManager(ComputeResource[] resources) {
+        dbl.log("%%%%%%%%%%%%%%%%%\nnew resorse manager");
         for (ComputeResource resource : resources) {
+            dbl.log("adding resource ", resource.getResourceType(), resource.getTotalAmountOfResource());
+
             resourceMap.put(resource.getResourceType(), resource);
         }
+        dbl.log("%%%%%%%%%%%%%%%%%");
     }
 
     /////////////////////////
@@ -74,6 +79,7 @@ public class ResourceManager {
             dbl.log(entry.getKey().name(), entry.getValue());
             if (resourceMap.containsKey(entry.getKey())) {
                 if (!resourceMap.get(entry.getKey()).isAmountResourceFree(entry.getValue()) && entry.getValue() != -1) {
+                    dbl.log("TYPE ", entry.getKey().name(), "is not free for ticket", ticket.getTicketId());
                     isFree = false;
                     break;
                 }
@@ -110,22 +116,20 @@ public class ResourceManager {
      * Returns the run string to give docker to use these resources
      *
      * @param ticket the ticket the resoures are reseved to
-     * @return The run string to give to the DockerRunCommand to use the resources. null if the there aren't enough resources free
+     * @return The run string to give to the DockerRunCommand to use the resources. empty string is returned if no resorses are reserved
      */
     public Vector<String> getTicketAllocationCommand(Ticket ticket) {
         Vector<String> commandParts = new Vector<>();
-        if (this.areTicketResourcesFree(ticket)) {
-            for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
-                if (resourceMap.containsKey(entry.getKey())) {
-                    commandParts.add(
-                            resourceMap.get(entry.getKey()).getResourceCommand(ticket.getTicketId())
-                    );
-                }
+        dbl.log("Getting command part for: ", ticket.getTicketId());
+        dbl.log("ere resources free: ", this.areTicketResourcesFree(ticket));
+        for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
+            if (resourceMap.containsKey(entry.getKey())) {
+                commandParts.add(
+                        resourceMap.get(entry.getKey()).getResourceCommand(ticket.getTicketId())
+                );
             }
-            return commandParts;
-        } else {
-            return null;
         }
+        return commandParts;
     }
 
 

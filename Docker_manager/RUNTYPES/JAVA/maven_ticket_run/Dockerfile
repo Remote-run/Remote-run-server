@@ -10,6 +10,6 @@ RUN mkdir /app/save_data
 RUN ln -s save_data /save
 COPY ./java/m2_repo /root/.m2/repository
 
-CMD mvn -e exec:java | tee /save/sdout
+CMD mvn exec:java | tee /save/sdout
 
 

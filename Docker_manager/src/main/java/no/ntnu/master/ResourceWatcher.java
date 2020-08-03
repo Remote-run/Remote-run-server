@@ -5,8 +5,6 @@ import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.ticket.Ticket;
 
-import javax.management.remote.rmi.RMIJRMPServerImpl;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.*;
 
@@ -47,6 +45,7 @@ public class ResourceWatcher extends Watcher{
                 // is a currently known node with a resource manager
                 if (missedCheckIn){
                     // if the last check in is more than an interval and buffer back in time
+                    dbl.log("worker", workerId , " missed check in  deleteing it.");
                     SystemDbFunctions.cleanOutWorker(workerId);
                     workers.removeIf(worker -> worker.getWorkerID().equals(workerId));
                 } else {
@@ -57,10 +56,12 @@ public class ResourceWatcher extends Watcher{
                 // is a node without a resourceManager
                 if (missedCheckIn){
                     // old with missed timeout delete
+                    dbl.log("worker", workerId , " missed check in  deleteing it.");
                     SystemDbFunctions.cleanOutWorker(workerId);
                     workers.removeIf(worker -> worker.getWorkerID().equals(workerId));
                 } else {
                     // valid checkIn. create node
+                    dbl.log("New worker", workerId , " found adding it.");
                     workers.add(SystemDbFunctions.getWorkerResourceManagerById(workerId));
                 }
 
@@ -89,6 +90,7 @@ public class ResourceWatcher extends Watcher{
                     if (freeManagers.length > 0){
                         // there is one or more managers capable of starting this ticket. pick the first one
                         freeManagers[0].stageAndAllocateTicketForWorker(ticket);
+                        dbl.log("Directly starting ", ticket.getCommonName(), " on runner ", freeManagers[0].getWorkerID());
 
                     } else {
                         // no manager can start the ticket currently so the ticket is put in the backlog of the
@@ -102,13 +104,16 @@ public class ResourceWatcher extends Watcher{
                         if (capableManagers.length > 0){
                             //Arrays.sort(capableManagers, Comparator.comparingInt(o -> workerIdsByBacklog.indexOf(o.getWorkerID())));
                             capableManagers[0].stageTicketForWorker(ticket);
+                            dbl.log("Adding ", ticket.getCommonName(), " to backlog on runner ", freeManagers[0].getWorkerID());
                         } else {
+                            dbl.log("\n NO CAPABLE RUNNERS FOR:", ticket.getTicketId());
                           // TODO: this means there are no system capable of running the ticket atm just wait
                         }
 
                     }
                 });
     }
+
 
 
     /**

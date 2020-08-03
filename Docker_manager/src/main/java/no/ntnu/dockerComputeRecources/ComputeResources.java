@@ -18,7 +18,7 @@ public class ComputeResources {
     public  static final ResourceKey defaultKey = new ResourceKey("Default",1,-1,-1);
     private static final Vector<ResourceKey> keys = new Vector<>();
 
-    private static final DebugLogger dbl = new DebugLogger(true);
+    private static final DebugLogger dbl = new DebugLogger(false);
 
     public static ResourceKey getSystemResourceKey(){
         ResourceKey resources = null;
