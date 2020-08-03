@@ -16,7 +16,7 @@ public class TicketDbFunctions extends PsqlDb {
 
 
 
-    public static boolean setTicketResource(UUID uid, ComputeResources.ResourceKey resource) {
+    public static boolean setTicketResourceKey(UUID uid, ComputeResources.ResourceKey resource) {
         boolean keyAdded = false;
         AtomicBoolean keyValid = new AtomicBoolean(false);
 
@@ -57,6 +57,9 @@ public class TicketDbFunctions extends PsqlDb {
     public static void setTicketComplete(UUID ticketId, TicketExitReason exitReason) {
         String query = String.format("DELETE FROM active_ticket WHERE ticket_id='%s';", ticketId);
         sqlUpdate(query);
+
+        TicketStatus status = (exitReason.equals(TicketExitReason.complete))? TicketStatus.DONE: TicketStatus.VOIDED;
+        updateTicketStatus(ticketId, status);
 
         query = String.format("INSERT INTO out (id, exit_reason) VALUES ('%s', '%s');", ticketId, exitReason.name());
         sqlUpdate(query);

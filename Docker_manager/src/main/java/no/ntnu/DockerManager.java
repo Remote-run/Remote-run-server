@@ -5,6 +5,7 @@ import no.ntnu.master.CompleteWatcher;
 import no.ntnu.master.DeleteWatcher;
 import no.ntnu.master.PowerOnChecks;
 import no.ntnu.master.ResourceWatcher;
+import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.util.DebugLogger;
 import no.ntnu.worker.RemoteRunWorker;
 
@@ -24,7 +25,7 @@ public class DockerManager {
     /**
      * The interval for the check in of the compute nodes
      */
-    private static final long checkInInterval = 60L; // 1 min
+    private static final long checkInInterval = 30L; // 1 min
 
     /**
      * The additional time on top of the interval the workers have to check in before being deleted
@@ -59,11 +60,9 @@ public class DockerManager {
 
 
     public static File translateSaveDataFileToHostFile(File file){
-        dbl.log("in path", file);
         String fp = file.getAbsolutePath().replaceFirst(saveDataDir.getAbsolutePath(),"");
         File osPath = new File(systemSaveDataDir, fp);
 
-        dbl.log("out path", osPath);
         return osPath;
     }
 
@@ -121,7 +120,6 @@ public class DockerManager {
 
         PowerOnChecks.removeUnusedResourceKeys();
         PowerOnChecks.removeUnusedFiles();
-        PowerOnChecks.removeUnusedResourceKeys();
         DockerManager manager = new DockerManager();
         manager.startLoops();
         /*ComputeResources.ResourceKey resources = null;

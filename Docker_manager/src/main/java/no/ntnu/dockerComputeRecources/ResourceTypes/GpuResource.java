@@ -125,9 +125,13 @@ public class GpuResource implements ComputeResource {
             }
         }
 
-        return String.format(this.commandString, keyPos.stream()
+        String cpmmand = String.format(this.commandString, keyPos.stream()
+                .peek(integer -> dbl.log("GPU INT", integer))
                 .map(String::valueOf)
                 .collect(Collectors.joining(",")));
+        dbl.log("COMMAND GPU ", cpmmand);
+
+        return cpmmand;
     }
 
     /**

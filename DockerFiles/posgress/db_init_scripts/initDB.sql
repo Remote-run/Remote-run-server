@@ -65,7 +65,15 @@ CREATE VIEW  running as
     SELECT id, status
     FROM tickets
     WHERE status = 'RUNNING';
+
 /*
+
+
+DELETE FROM resource_keys k
+WHERE EXISTS (SELECT k.id FROM resource_keys k WHERE k.id NOT IN (SELECT  resource_key FROM compute_nodes  UNION ALL SELECT resource_key FROM tickets));
+
+
+
 SELECT a.ticket_id
 FROM active_ticket a
 left join tickets t on t.id = a.ticket_id

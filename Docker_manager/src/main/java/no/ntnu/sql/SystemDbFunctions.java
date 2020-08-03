@@ -7,6 +7,7 @@ import no.ntnu.dockerComputeRecources.WorkerNodeResourceManager;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -70,9 +71,8 @@ public class SystemDbFunctions extends PsqlDb{
 
     public static void removeUnusedResourceKeys(){
         String query =
-                "DELETE FROM resource_keys " +
-                "WHERE id NOT IN " +
-                    "(SELECT DISTINCT resource_key FROM compute_nodes UNION ALL SELECT DISTINCT resource_key FROM tickets) NOTNULL;";
+                "DELETE FROM resource_keys k " +
+                        " WHERE k.id NOT IN (SELECT  resource_key FROM compute_nodes  UNION ALL SELECT resource_key FROM tickets);";
         sqlUpdate(query);
     }
 
@@ -133,7 +133,7 @@ public class SystemDbFunctions extends PsqlDb{
 
         query = "DELETE FROM resource_keys " +
                 //"WHERE id IN (SELECT resource_key FROM compute_nodes c " +
-                String.format("WHERE c.id = '%s';", workerId);
+                String.format("WHERE id = '%s';", workerId);
         sqlUpdate(query);
 
 

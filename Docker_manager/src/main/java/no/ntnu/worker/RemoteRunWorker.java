@@ -6,6 +6,7 @@ import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.sql.TicketDbFunctions;
+import no.ntnu.ticket.RunnableTicket;
 import no.ntnu.ticket.Ticket;
 import no.ntnu.util.DebugLogger;
 
@@ -91,13 +92,12 @@ public class RemoteRunWorker {
 
     private void fillQue() {
         UUID[] sortedQue = TicketDbFunctions.getWorkersActiveIds(this.workerId);
-        Stream<UUID> systemTicketStream = Stream.of(backlog, running)
-                .flatMap(tickets -> tickets.stream()
-                .map(Ticket::getTicketId));
 
         for (UUID id: sortedQue){
             if (id != null){
-                if (systemTicketStream.noneMatch(id::equals)){
+                if (Stream.of(backlog, running)
+                        .flatMap(tickets -> tickets.stream().map(Ticket::getTicketId))
+                        .noneMatch(id::equals)){
                     this.addToBacklog(id);
                 }
             } else {

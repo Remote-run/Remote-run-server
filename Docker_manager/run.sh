@@ -13,12 +13,10 @@ docker build . -t docker_manager:latest
 
 docker run -it --rm \
 -v /var/run/docker.sock:/var/run/docker.sock \
--v $save_data_path:/save_data \
--v $docker_files_path:/runtypes \
--v send_volume:/send \
--v $t:/app \
--e SAVE_DATA_SYS_PATH=$save_data_path \
---net=host \
+-v $PATH/save_data:/save_data \
+-v $PATH/RUNTYPES:/runtypes \
+-e SAVE_DATA_SYS_PATH=$PATH/save_data \
+-e "SQLURL=jdbc:postgresql://10.10.10.6:5432/docker" \
 --name docker_manager \
 docker_manager:latest
 #/bin/bash

@@ -41,6 +41,8 @@ class PsqlDb {
         return connection;
     }
 
+
+
     protected static void sqlQuery(String query, ThrowingConsumer<ResultSet, SQLException> rowHandler){
         try{
             sqlQueryUnCaught(query, rowHandler);
