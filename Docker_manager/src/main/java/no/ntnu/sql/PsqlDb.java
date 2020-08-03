@@ -32,6 +32,7 @@ class PsqlDb {
         Connection connection = null;
         try{
             Class.forName("org.postgresql.Driver"); // i think this is to chek if the class exists
+
             connection = DriverManager.getConnection(url, dbUser, dbPassword);
         } catch (Exception e){
             e.printStackTrace();

@@ -111,6 +111,15 @@ public class DockerManager {
 
 
     public static void main( String[] args ) {
+        while (!SystemDbFunctions.canConnectToDB()){
+            System.out.println("Cant connect to db waiting...");
+            try {
+                Thread.sleep(5000);
+            } catch (Exception e){}
+
+        }
+
+        PowerOnChecks.removeUnusedResourceKeys();
         PowerOnChecks.removeUnusedFiles();
         PowerOnChecks.removeUnusedResourceKeys();
         DockerManager manager = new DockerManager();

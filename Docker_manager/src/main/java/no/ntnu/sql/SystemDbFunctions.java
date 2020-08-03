@@ -14,6 +14,15 @@ import java.util.stream.Collectors;
 
 public class SystemDbFunctions extends PsqlDb{
 
+    public static boolean canConnectToDB(){
+        try {
+            tryConnectToDB().close();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 
     public static ComputeResources.ResourceKey[] getDbTicketResourceKeys() {
         Vector<ComputeResources.ResourceKey> tmpList = new Vector<>();
