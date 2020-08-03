@@ -136,7 +136,7 @@ public class PowerOnChecks {
 
             if (ids.length != 0){
                 Arrays.stream(ids)
-                        .map(Ticket::getTicketFromUUID)
+                        .map(Ticket::new)
                         .forEach(tickets::add);
             }
         } catch (Exception e){

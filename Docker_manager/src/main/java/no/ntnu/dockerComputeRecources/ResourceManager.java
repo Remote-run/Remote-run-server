@@ -35,10 +35,10 @@ public class ResourceManager {
      * @param que the que of tickets to run
      * @return A vector containing the tickets from the que that where allocated resources for
      */
-    public Vector<Ticket> getStartQue(Vector<Ticket> que) {
+    public Vector<RunnableTicket> getStartQue(Vector<RunnableTicket> que) {
         dbl.log("try add que", que);
-        Vector<Ticket> allocated = new Vector<>();
-        for (Ticket ticket : que) {
+        Vector<RunnableTicket> allocated = new Vector<>();
+        for (RunnableTicket ticket : que) {
             dbl.log("ticket ", ticket);
             if (this.areTicketResourcesFree(ticket)) {
                 dbl.log("is added ", ticket);

@@ -25,8 +25,8 @@ public class RemoteRunWorker {
 
 
 
-    private Vector<Ticket> backlog = new Vector<>();
-    private Vector<Ticket> running = new Vector<>();
+    private Vector<RunnableTicket> backlog = new Vector<>();
+    private Vector<RunnableTicket> running = new Vector<>();
     private ResourceManager resourceManager;
     private ComputeResources.ResourceKey resourceKey;
 
@@ -107,7 +107,7 @@ public class RemoteRunWorker {
 
     }
     private void tryStartQueTickets(){
-        Vector<Ticket> added = resourceManager.getStartQue(this.backlog);
+        Vector<RunnableTicket> added = resourceManager.getStartQue(this.backlog);
 
         added.forEach(ticket -> ticket.run(resourceManager));
 
@@ -118,7 +118,7 @@ public class RemoteRunWorker {
     private void addToBacklog(UUID ticketID){
         dbl.log("added ticket to backlog:", ticketID);
 
-        Ticket ticket = Ticket.getTicketFromUUID(ticketID);
+        RunnableTicket ticket = RunnableTicket.getTicketFromUUID(ticketID);
         if (ticket != null){
             if(ticket.getState() == TicketStatus.WAITING){
                 ticket.build();

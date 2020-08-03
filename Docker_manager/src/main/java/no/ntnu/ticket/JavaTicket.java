@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.UUID;
 
-public class JavaTicket extends Ticket {
+public class JavaTicket extends RunnableTicket {
 
     private        final File javaDockerFile = new File(DockerManager.dckerfilesDir, "JAVA/maven_ticket_run/Dockerfile");
     private static final File m2RepoDir      = new File(DockerManager.buildHelpers, "java/m2_repo");

@@ -9,7 +9,7 @@ import no.ntnu.config.PythonApiConfig;
 import java.io.File;
 import java.util.UUID;
 
-public class PythonTicket extends Ticket {
+public class PythonTicket extends RunnableTicket {
 
     private final File PythonDockerFile = new File(DockerManager.dckerfilesDir, "PYTHON/python_variable_image/Dockerfile");
 

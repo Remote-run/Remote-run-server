@@ -77,10 +77,10 @@ public class ResourceWatcher extends Watcher{
 
 
         Arrays.stream(sortedQue)
-                .peek(uuid ->  dbl.log("ids listed in que:", uuid))
-                .map(Ticket::getTicketFromUUID)
+                .map(Ticket::new)
                 .forEach(ticket -> {
-                    TicketDbFunctions.setTicketResource(ticket.getTicketId(), ticket.getResourceKey());
+
+                    TicketDbFunctions.setTicketResourceKey(ticket.getTicketId(), ticket.getResourceKey());
 
                     WorkerNodeResourceManager[] freeManagers = this.workers.stream()
                             .filter(resourceManager -> resourceManager.areTicketResourcesFree(ticket))

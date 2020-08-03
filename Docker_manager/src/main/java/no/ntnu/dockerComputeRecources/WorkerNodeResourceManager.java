@@ -47,8 +47,8 @@ public class WorkerNodeResourceManager extends ResourceManager {
         // every ticket that is active in the db but not localy has to be updated localy
         dbActivIds.stream()
                 .filter(uuid -> !localActiveIds.contains(uuid))
-                .map(Ticket::getTicketFromUUID)  // this is not ideal
-                .forEach(this::stageAndAllocateTicketForWorker);
+                .map(Ticket::new)  // this is not ideal
+                .forEach(this::allocateTicketResources);
 
 
 
@@ -61,7 +61,8 @@ public class WorkerNodeResourceManager extends ResourceManager {
 
         for (Map.Entry<ResourceType, Integer> entry : ComputeResources.mapUnitToTypeMap(ticket.getResourceKey()).entrySet()) {
             if (this.getResourceMap().containsKey(entry.getKey())) {
-                if (!(capable = capable && this.getResourceMap().get(entry.getKey()).getTotalAmountOfResource() > entry.getValue())) {
+                if (!(capable = capable && this.getResourceMap().get(entry.getKey()).getTotalAmountOfResource() >= entry.getValue())) {
+                    dbl.log("NOT CAPABLE OF R:", entry.getKey().name());
                     break;
                 }
             }
@@ -80,7 +81,7 @@ public class WorkerNodeResourceManager extends ResourceManager {
         if (super.allocateTicketResources(ticket)){
             stageTicketForWorker(ticket);
         } else {
-            dbl.log("\n\n Super not good trying to stage under capasity");
+            dbl.log("\n\n Super not good, trying to stage under capasity");
         }
     }
 }
