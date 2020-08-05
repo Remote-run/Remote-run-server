@@ -17,9 +17,17 @@ public class JavaTicket extends RunnableTicket {
     private static final File m2RepoDir      = new File(DockerManager.buildHelpers, "java/m2_repo");
 
     private static final File mavenInstallDockerfile = new File(DockerManager.dckerfilesDir, "JAVA/maven_install_image/Dockerfile");
+    private static final File cudaOpenjdkDockerfile = new File(DockerManager.dckerfilesDir, "JAVA/cuda_maven_openjdk/Dockerfile");
+
+    private static boolean isCudaOpenjdkBuilt = false;
+    private static boolean isMavenImageBuilt = false;
+
 
     private DockerRunCommand runCommand;
     private JavaApiConfig ticketConfig;
+
+
+
 
     public JavaTicket(UUID ticketId, Boolean safeBuild) {
         super(ticketId, safeBuild);
@@ -34,6 +42,48 @@ public class JavaTicket extends RunnableTicket {
         dbl.log("java api config ", ticketConfig);
     }
 
+    private static boolean isInstallPossible(){
+        boolean possible = false;
+        if (!(isMavenImageBuilt && isCudaOpenjdkBuilt)){
+            String[] images = DockerFunctions.getImages();
+            try {
+                if (Arrays.stream(images).anyMatch(s -> s.equals("cuda_openjdk"))){
+                    isCudaOpenjdkBuilt = true;
+                } else {
+                    DockerImageBuildCommand buildCommand = new DockerImageBuildCommand("cuda_openjdk", DockerManager.buildHole ,JavaTicket.cudaOpenjdkDockerfile);
+                    buildCommand.setBlocking(true);
+                    Process installProcess = buildCommand.run();
+
+                    if (installProcess.exitValue() == 0){
+                        isCudaOpenjdkBuilt = true;
+                    }
+                }
+
+                if (Arrays.stream(images).anyMatch(s -> s.equals("cuda_openjdk"))){
+                    isMavenImageBuilt = true;
+                } else {
+                    DockerImageBuildCommand buildCommand = new DockerImageBuildCommand("maven_install_image", DockerManager.buildHole ,JavaTicket.mavenInstallDockerfile);
+                    buildCommand.setBlocking(true);
+                    Process installProcess = buildCommand.run();
+
+                    if (installProcess.exitValue() == 0){
+                        isMavenImageBuilt = true;
+                    }
+                }
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        if (isMavenImageBuilt && isCudaOpenjdkBuilt){
+            possible = true;
+        }
+
+        return possible;
+
+
+    }
+
     /**
      * Runs the maven install container for this ticket, this installs all the maven deps to the shared volume.
      * the current thread will wait for the process to complete
@@ -42,48 +92,32 @@ public class JavaTicket extends RunnableTicket {
      */
     private static synchronized boolean installMavenDeps(Ticket ticket){
         boolean sucsess = true;
-        dbl.log("maven install requested");
-        String containerName = "builder_" + ticket.commonName;
-        DockerRunCommand installCmd = new DockerRunCommand(
-                "maven_install_image", containerName);
+        if (JavaTicket.isInstallPossible()){
+            dbl.log("maven install requested");
+            String containerName = "builder_" + ticket.commonName;
+            DockerRunCommand installCmd = new DockerRunCommand(
+                    "maven_install_image", containerName);
 
-        installCmd.setNetwork("ticketNetwork");
-        installCmd.addVolume(DockerManager.translateSaveDataFileToHostFile(JavaTicket.m2RepoDir).getAbsolutePath(),"/root/.m2/repository");
-        installCmd.addVolume(DockerManager.translateSaveDataFileToHostFile(ticket.runDir).getAbsolutePath(), "/app/");
-
-
-        installCmd.setBlocking(true);
-        installCmd.setErrorFile(new File(ticket.logDir, "maven_error_logs"));
-        installCmd.setOutputFile(new File(ticket.logDir, "maven_norm_logs"));
-        Process process = installCmd.run();
+            installCmd.setNetwork("ticketNetwork");
+            installCmd.addVolume(DockerManager.translateSaveDataFileToHostFile(JavaTicket.m2RepoDir).getAbsolutePath(),"/root/.m2/repository");
+            installCmd.addVolume(DockerManager.translateSaveDataFileToHostFile(ticket.runDir).getAbsolutePath(), "/app/");
 
 
-        if (process.exitValue() != 0){
-            boolean doInstallImageExist = Arrays.asList(DockerFunctions.getImages()).contains("maven_install_image");
-            if (!doInstallImageExist){
-                dbl.log("Install image is not built bulding it");
-                int exitcode = -1;
-                try{
-                    DockerImageBuildCommand buildCommand = new DockerImageBuildCommand("maven_install_image", DockerManager.buildHole ,JavaTicket.mavenInstallDockerfile);
-                    buildCommand.setBlocking(true);
-                    Process installProcess = buildCommand.run();
-                    exitcode = installProcess.exitValue();
+            installCmd.setBlocking(true);
+            installCmd.setErrorFile(new File(ticket.logDir, "maven_error_logs"));
+            installCmd.setOutputFile(new File(ticket.logDir, "maven_norm_logs"));
+            Process process = installCmd.run();
+            DockerFunctions.removeContainer(containerName);
 
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
 
-                if (exitcode == 0){
-                    process = installCmd.run();
-                }
+            if (process.exitValue() != 0){
+                sucsess = false;
             }
-        }
-        if (process.exitValue() != 0){
+        }else {
             sucsess = false;
         }
-        dbl.log("exit value java build", process.exitValue());
 
-        //DockerFunctons.removeContainer(containerName);
+
         return sucsess;
     }
 
