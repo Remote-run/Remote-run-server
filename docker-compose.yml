@@ -1,5 +1,15 @@
 version: '3.8'
 
+x-DbLoggin:
+  environment:
+    &db-login
+    SQLURL: "jdbc:postgresql://${MASTER_IP}:5432/docker"
+    POSGRESS_USER: "postgres"
+    POSTGRES_DB: "docker"
+    POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+
+
+
 
 
 services:
@@ -7,10 +17,10 @@ services:
     image: postgres
     container_name: postgres_db
 
-    env_file:
-      - ./DockerFiles/posgress/db_login.env
+
 
     environment:
+      << :  *db-login
       PGDATA: "/var/lib/postgresql/data/pgdata"
 
 
@@ -24,14 +34,10 @@ services:
 
     networks:
       db_network:
-#        ipv4_address: "10.10.200.200"
 
     ports:
-      - "10.10.10.6:5432:5432"
-#      - target: 5432
-#        published: 5432
-#        protocol: tcp
-#        mode: host
+      - "${MASTER_IP}:5432:5432"
+
 
     restart: unless-stopped
 
@@ -43,8 +49,8 @@ services:
       context: ./ServerApi
       dockerfile: ./Dockerfile
 
-    env_file:
-      - ./DockerFiles/posgress/db_login.env
+    environment:
+      << :  *db-login
 
 
     volumes:
@@ -79,16 +85,17 @@ services:
       context: ./Docker_manager
       dockerfile: Dockerfile
 
-    env_file:
-      - ./DockerFiles/posgress/db_login.env
-      - ./DockerFiles/email_login.env
 
     environment:
       SAVE_DATA_SYS_PATH: $PWD/save_data
+      << :  *db-login
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      MAIL_USERNAME: "${MAIL_USERNAME}"
       IS_SLAVE: "FALSE"
-      GPUS: 1
 
     volumes:
+    - "./ConfigFiles/resource_tags.yaml:/app/resource_tags.yaml"
+    - "./system_resources.yaml:/app/system_resources.yaml"
     - type: bind
       source: /var/run/docker.sock
       target: /var/run/docker.sock
@@ -124,8 +131,11 @@ services:
         target: /etc/letsencrypt
 
     env_file:
-      - ./DockerFiles/nginx_certbot/nginx_cerbot.env
+      - ./ConfigFiles/nginx_cerbot.env
 
+    environment:
+      DOMAIN: "${API_DOMAIN}"
+      LE_EMAIL: "${MAIL_USERNAME}"
     logging:
       options:
         max-size: "50m"
@@ -146,12 +156,6 @@ services:
 
 networks:
   db_network:
-#    ipam:
-#      driver: default
-#      config:
-#        - subnet: "10.10.200.0/8"
-#    internal: false
-
   frontend:
   backend:
   ticketNetwork:
