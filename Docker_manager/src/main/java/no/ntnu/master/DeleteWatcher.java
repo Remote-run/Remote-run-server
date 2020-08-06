@@ -3,7 +3,7 @@ package no.ntnu.master;
 import no.ntnu.DockerManager;
 import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.ticket.Ticket;
-import no.ntnu.util.FileUtils;
+import no.trygvejw.util.FileUtils;
 
 import java.io.File;
 import java.sql.SQLException;

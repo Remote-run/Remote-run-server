@@ -4,7 +4,7 @@ import no.ntnu.dockerComputeRecources.ResourceTypes.ComputeResource;
 import no.ntnu.dockerComputeRecources.ResourceTypes.ResourceType;
 import no.ntnu.ticket.RunnableTicket;
 import no.ntnu.ticket.Ticket;
-import no.ntnu.util.DebugLogger;
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.util.HashMap;
 import java.util.Map;

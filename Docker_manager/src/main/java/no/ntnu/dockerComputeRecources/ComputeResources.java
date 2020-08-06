@@ -2,7 +2,7 @@ package no.ntnu.dockerComputeRecources;
 
 import no.ntnu.dockerComputeRecources.ResourceTypes.*;
 import no.ntnu.sql.SystemDbFunctions;
-import no.ntnu.util.DebugLogger;
+import no.trygvejw.debugLogger.DebugLogger;
 import org.postgresql.util.JdbcBlackHole;
 import org.yaml.snakeyaml.Yaml;
 

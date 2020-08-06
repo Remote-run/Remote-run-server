@@ -12,8 +12,9 @@ import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.exeptions.TicketErrorException;
 import no.ntnu.sql.TicketDbFunctions;
-import no.ntnu.util.Compression;
-import no.ntnu.util.DebugLogger;
+
+import no.trygvejw.debugLogger.DebugLogger;
+import no.trygvejw.util.Compression;
 import org.json.JSONObject;
 
 

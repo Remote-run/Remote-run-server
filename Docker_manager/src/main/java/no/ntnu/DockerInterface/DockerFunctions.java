@@ -1,7 +1,7 @@
 package no.ntnu.DockerInterface;
 
 import no.ntnu.ticket.Ticket;
-import no.ntnu.util.DebugLogger;
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

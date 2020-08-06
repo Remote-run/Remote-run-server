@@ -7,7 +7,7 @@ import no.ntnu.enums.TicketStatus;
 import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.ticket.Ticket;
-import no.ntnu.util.FileUtils;
+import no.trygvejw.util.FileUtils;
 
 import java.io.File;
 import java.util.Arrays;

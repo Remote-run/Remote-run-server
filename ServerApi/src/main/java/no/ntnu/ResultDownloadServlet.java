@@ -1,6 +1,7 @@
 package no.ntnu;
 
-import no.ntnu.util.DebugLogger;
+
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.io.File;
 import java.io.FileInputStream;

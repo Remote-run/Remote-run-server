@@ -6,8 +6,8 @@ import no.ntnu.master.DeleteWatcher;
 import no.ntnu.master.PowerOnChecks;
 import no.ntnu.master.ResourceWatcher;
 import no.ntnu.sql.SystemDbFunctions;
-import no.ntnu.util.DebugLogger;
 import no.ntnu.worker.RemoteRunWorker;
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.io.File;
 

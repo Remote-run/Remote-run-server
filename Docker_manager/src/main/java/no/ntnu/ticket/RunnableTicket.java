@@ -9,7 +9,6 @@ import no.ntnu.enums.RunType;
 import no.ntnu.enums.TicketStatus;
 import no.ntnu.exeptions.TicketErrorException;
 import no.ntnu.sql.TicketDbFunctions;
-import no.ntnu.util.Compression;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -1,8 +1,8 @@
 package no.ntnu.sql;
 
 import no.ntnu.enums.RunType;
-import no.ntnu.util.DebugLogger;
 import no.ntnu.util.ThrowingConsumer;
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.sql.*;
 import java.util.HashMap;

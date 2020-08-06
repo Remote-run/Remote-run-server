@@ -1,6 +1,7 @@
 package no.ntnu.master;
 
-import no.ntnu.util.DebugLogger;
+
+import no.trygvejw.debugLogger.DebugLogger;
 
 public abstract class Watcher {
 

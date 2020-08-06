@@ -8,7 +8,7 @@ import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.sql.TicketDbFunctions;
 import no.ntnu.ticket.RunnableTicket;
 import no.ntnu.ticket.Ticket;
-import no.ntnu.util.DebugLogger;
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.util.UUID;
 import java.util.Vector;

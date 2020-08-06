@@ -1,6 +1,7 @@
 package no.ntnu.dockerComputeRecources.ResourceTypes;
 
-import no.ntnu.util.DebugLogger;
+
+import no.trygvejw.debugLogger.DebugLogger;
 
 import java.util.HashMap;
 import java.util.UUID;
