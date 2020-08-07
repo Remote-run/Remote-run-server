@@ -1,0 +1,55 @@
+version: '3.8'
+
+x-DbLoggin:
+  environment:
+    &db-login
+    SQLURL: "jdbc:postgresql://${MASTER_IP}:5432/docker"
+    POSGRESS_USER: "postgres"
+    POSTGRES_DB: "docker"
+    POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+
+services:
+  docker_manager:
+    container_name: docker_manager
+
+    build:
+      context: ./Docker_manager
+      dockerfile: Dockerfile
+
+
+    environment:
+      SAVE_DATA_SYS_PATH: $PWD/save_data
+      << :  *db-login
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      MAIL_USERNAME: "${MAIL_USERNAME}"
+      IS_SLAVE: "TRUE"
+
+    volumes:
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+    - type: bind
+      source: ./save_data
+      target: /save_data
+    - type: bind
+      source: ./Docker_manager/RUNTYPES
+      target: /runtypes
+
+    - type: bind
+      source: ./ConfigFiles/resource_tags.yaml
+      target: /app/resource_tags.yaml
+    - type: bind
+      source: ./system_resources.yaml
+      target: /app/system_resources.yaml
+
+
+
+    restart: unless-stopped
+
+
+networks:
+  db_network:
+  frontend:
+  backend:
+
+
