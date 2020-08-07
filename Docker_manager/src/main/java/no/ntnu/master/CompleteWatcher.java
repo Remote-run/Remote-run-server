@@ -26,8 +26,9 @@ public class CompleteWatcher extends Watcher {
         mailList.forEach((uuid, strings) -> {
             String retMail = strings[0];
             TicketExitReason exitReason = TicketExitReason.valueOf(strings[1]);
-            //Mail.sendTicketDoneMail(uuid, retMail, exitReason);
-            dbl.log("\n\n DUMMY MAIL \n\n");
+            System.out.printf("Sending mail wit ticket exit reason %15s to %s \n", exitReason.name(), uuid);
+            Mail.sendTicketDoneMail(uuid, retMail, exitReason);
+            //dbl.log("\n\n DUMMY MAIL \n\n");
             TicketDbFunctions.setMailSent(uuid);
         });
     }
