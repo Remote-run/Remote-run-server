@@ -1,7 +1,5 @@
 # Remote-run-server
-System for allowing clients to run some code (currently Java and Python) on a possibly GPU accelerated server. The system is using docker with nvidia gpu pass-through. The server is can be run in two modes ether in master or in worker/slave mode. when running in master mode a worker is spawned aswell so launching bouth is not neccesery
-
-## 
+System for allowing clients to run some code (currently Java and Python) on a possibly GPU accelerated server. The system is using docker with nvidia gpu pass-through. The server is can be run in two modes ether in master or in worker/slave mode. when running in master mode a worker is spawned as well so launching both is not necessary
 
 
 
@@ -20,7 +18,7 @@ If you want to run more than one worker you will need:
 
 
 ## Usage
-If all the requierments abow are met,  just launce the ``` start_master.sh ``` to (big suprise) start the master and launche the ``` start_worker.sh ``` to start in worker mode. The 
+Download and decompress the release and If all the requirements above are met,  just launch the ``` start_master.sh ``` to (big suprise) start the master and launch the ``` start_worker.sh ``` to start in worker mode. If you compile the project yourself you have to have the [Remote-run-client][https://github.com/Remote-run/Remote-run-client] installed in your local maven repo
 
 
 ### Notes
