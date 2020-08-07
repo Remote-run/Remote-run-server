@@ -25,14 +25,15 @@ public class TicketDbFunctions extends PsqlDb {
             keyValid.set(true);
         });
 
+        String dbResourceId = resource.resourceId;
 
-
-        if (keyValid.get()){
-            query = String.format("UPDATE tickets SET resource_key = '%s' WHERE id='%s';", resource.resourceId, uid);
-            sqlUpdate(query);
-        } else {
+        if (!keyValid.get()){
+            dbResourceId = ComputeResources.defaultKey.resourceId;
             errorQueries.log("tying to set non existing key:\n", query);
         }
+
+        query = String.format("UPDATE tickets SET resource_key = '%s' WHERE id='%s';", dbResourceId, uid);
+        sqlUpdate(query);
 
         return keyAdded;
 
