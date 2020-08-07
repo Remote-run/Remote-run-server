@@ -51,7 +51,7 @@ public class DockerManager {
     public static final File saveDir       = new File(saveDataDir, "save");
     public static final File logDir        = new File(saveDataDir, "logs");
     public static final File buildHelpers  = new File(saveDataDir, "build_helpers");
-    public static final File sendDir       = new File(saveDataDir, "save");
+    public static final File sendDir       = new File(saveDataDir, "send");
 
     // a dir with no children to use as build context
     public static final File buildHole     = new File(buildHelpers, "build_hole");
