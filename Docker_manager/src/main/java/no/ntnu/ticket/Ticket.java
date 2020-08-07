@@ -50,11 +50,19 @@ public class Ticket {
     protected UUID ticketId;
     protected String commonName;
 
+    // where the files to run are located
     protected File runDir;
+
+    // where the files the running program saves during runtime is located
     protected File saveDir;
+
+    // where the logs are
     protected File logDir;
-    protected File outDir;
+
+    // the file to return to the user
     protected File outFile;
+
+    // the config fil for the current ticket
     protected File apiConfigFile;
 
 
@@ -113,10 +121,12 @@ public class Ticket {
 
     protected void compressResults(boolean includeLogs) throws IOException {
         if (this.logDir.exists() && includeLogs){
+            dbl.log("compressing in logs for: ", this.getCommonName());
             Compression.zip(logDir, new File(saveDir, "logs.zip"));
         }
 
         if (saveDir.exists()){
+            dbl.log("compressing in results for: ", this.getCommonName());
             Compression.zip(saveDir, outFile);
         }
     }

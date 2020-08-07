@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public class ComputeResources {
     private static final File resourceKeysFile = new File("/app/resource_tags.yaml");
     private static final File systemResourceFile = new File("/app/system_resources.yaml");
-    public  static final ResourceKey defaultKey = new ResourceKey("Default",1,-1,-1);
+    public  static final ResourceKey defaultKey = new ResourceKey("DEFAULT",1,-1,-1);
     private static final Vector<ResourceKey> keys = new Vector<>();
 
     private static final DebugLogger dbl = new DebugLogger(false);
@@ -52,8 +52,8 @@ public class ComputeResources {
             Vector<ResourceKey> mabyeNewDbKeys = new Vector(Arrays.asList(SystemDbFunctions.getDbTicketResourceKeys()));
             Vector<ResourceKey> mabyeNewYamlKeys = ReadYamlResourceKeys();
 
-            System.out.println(mabyeNewDbKeys.toString());
-            System.out.println(mabyeNewYamlKeys.toString());
+            dbl.log(mabyeNewDbKeys.toString());
+            dbl.log(mabyeNewYamlKeys.toString());
 
             mabyeNewYamlKeys.stream()
                     .peek( resourceKey ->  dbl.log("ney key peek pre filter", resourceKey.resourceId))

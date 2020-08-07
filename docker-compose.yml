@@ -94,8 +94,6 @@ services:
       IS_SLAVE: "FALSE"
 
     volumes:
-    - "./ConfigFiles/resource_tags.yaml:/app/resource_tags.yaml"
-    - "./system_resources.yaml:/app/system_resources.yaml"
     - type: bind
       source: /var/run/docker.sock
       target: /var/run/docker.sock
@@ -105,6 +103,13 @@ services:
     - type: bind
       source: ./Docker_manager/RUNTYPES
       target: /runtypes
+
+    - type: bind
+      source: ./ConfigFiles/resource_tags.yaml
+      target: /app/resource_tags.yaml
+    - type: bind
+      source: ./system_resources.yaml
+      target: /app/system_resources.yaml
 
 
     networks:

@@ -16,7 +16,6 @@ out
 gen
 
 
-save_data
 Docker_manager/target
 
 
@@ -25,5 +24,4 @@ ServerApi/target
 *env
 
 
-/DockerFiles/maven_package_run/m2/*
-/save_data
+save_data/*

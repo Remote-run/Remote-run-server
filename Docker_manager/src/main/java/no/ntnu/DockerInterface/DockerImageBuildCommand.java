@@ -85,7 +85,6 @@ public class DockerImageBuildCommand extends DockerCommand {
         // build root
         commandParts.add(buildDir.getAbsolutePath());
 
-        System.out.println(commandParts);
 
         return commandParts;
     }

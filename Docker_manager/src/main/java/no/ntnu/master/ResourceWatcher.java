@@ -37,7 +37,6 @@ public class ResourceWatcher extends Watcher{
 
         long currentTime = Instant.now().getEpochSecond();
 
-        dbl.log("curr workers ",nodeIdAndTimeots.toString());
 
         nodeIdAndTimeots.forEach((workerId, checkIn) -> {
             boolean missedCheckIn = checkIn + checkInInterval + checkInIntervalBuffer < currentTime;
@@ -83,6 +82,8 @@ public class ResourceWatcher extends Watcher{
 
                     TicketDbFunctions.setTicketResourceKey(ticket.getTicketId(), ticket.getResourceKey());
 
+
+
                     WorkerNodeResourceManager[] freeManagers = this.workers.stream()
                             .filter(resourceManager -> resourceManager.areTicketResourcesFree(ticket))
                             .toArray(WorkerNodeResourceManager[]::new);
@@ -104,7 +105,7 @@ public class ResourceWatcher extends Watcher{
                         if (capableManagers.length > 0){
                             //Arrays.sort(capableManagers, Comparator.comparingInt(o -> workerIdsByBacklog.indexOf(o.getWorkerID())));
                             capableManagers[0].stageTicketForWorker(ticket);
-                            dbl.log("Adding ", ticket.getCommonName(), " to backlog on runner ", freeManagers[0].getWorkerID());
+                            dbl.log("Adding ", ticket.getCommonName(), " to backlog on runner ", capableManagers[0].getWorkerID());
                         } else {
                             dbl.log("\n NO CAPABLE RUNNERS FOR:", ticket.getTicketId());
                           // TODO: this means there are no system capable of running the ticket atm just wait

@@ -43,7 +43,7 @@ public class RemoteRunWorker {
 
     private void resourceCheckIn(){
         if (SystemDbFunctions.getWorkerResourceManagerById(this.workerId) == null){
-            dbl.log("\n Worker generated \n");
+            dbl.sLog("\n Worker generated \n");
             SystemDbFunctions.addWorker(resourceKey, workerId);
         }
         SystemDbFunctions.workerChekIn(workerId);
