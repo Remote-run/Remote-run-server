@@ -78,8 +78,8 @@ public class DockerImageBuildCommand extends DockerCommand {
         commandParts.add("-t " + this.imageName);
 
         // build vars
-        for (Map.Entry var : this.imageBuildArgs.entrySet()) {
-            commandParts.add(String.format("--build-arg %s=\"%s\"", var.getKey(), var.getValue()));
+        for (Map.Entry<String,String> var : this.imageBuildArgs.entrySet()) {
+            commandParts.add(String.format("--build-arg %s=\"%s\"", var.getKey().strip(), var.getValue().strip()));
         }
 
         // build root

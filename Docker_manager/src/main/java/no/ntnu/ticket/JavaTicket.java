@@ -17,7 +17,7 @@ public class JavaTicket extends RunnableTicket {
     private static final File m2RepoDir      = new File(DockerManager.buildHelpers, "java/m2_repo");
 
     private static final File mavenInstallDockerfile = new File(DockerManager.dckerfilesDir, "JAVA/maven_install_image/Dockerfile");
-    private static final File cudaOpenjdkDockerfile = new File(DockerManager.dckerfilesDir, "JAVA/cuda_maven_openjdk/Dockerfile");
+    private static final File cudaOpenjdkDockerfile = new File(DockerManager.dckerfilesDir, "/JAVA/cuda_maven_openjdk-14/Dockerfile");
 
     private static boolean isCudaOpenjdkBuilt = false;
     private static boolean isMavenImageBuilt = false;
