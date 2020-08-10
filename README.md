@@ -13,13 +13,18 @@ For running in ether slave or master mode:
 - The system system_resources.yaml needs to be filled it tels the application how mutch resources you are ok with docker using.
 
 If you want to run more than one worker you will need:
-- some sort of network disk system is required to share the save data dir. chose whatever system you are comfortable with given that the application is kind of state based ish makes write conflicts practically not possible. I personally just use the nfs-kernel-server because it is easy and works. It is important that the volume is mounted to the Remote-run-server/save_data **Before** start_(master/worker) is run.
+- some sort of network disk system is required to share the save data dir. chose whatever system you are comfortable with given that the application is kind of state based ish makes write conflicts practically not possible. I personally just use the nfs-kernel-server because it is easy and works. some notes on the shared dirs:
+    - When setting up the shared dir some of the sub dir's shold be generated to avoid ownership issues by creating them elswhere jus go to the shared dir and paste ```mkdir -p ./{build_helpers,logs,run,save,send} && chown nobody:docker -R $PWD``` you may have to sudo this.
+    - It is important that the volume is mounted to the Remote-run-server/save_data **Before** start_(master/worker) is run.
 - A NIC with a local adress to allow other workers to connect to the host DB it is **strongly** recommended not to use the public interface if so it is very important to change the default password currently used
 
 
 ## Usage
 Download and decompress the release and If all the requirements above are met,  just launch the ``` start_master.sh ``` to (big suprise) start the master and launch the ``` start_worker.sh ``` to start in worker mode. If you compile the project yourself you have to have the [Remote-run-client](https://github.com/Remote-run/Remote-run-client) installed in your local maven repo
 
+### Common Problems
+- some whining about permission:
+    - this means that someone who where not supposed to have made dirs in the shared folder this can be fixed by going to the nfs host and running ```sudo chown nobody:docker -R /path/to/nfs/data/save_data```
 
 ### Notes
 
