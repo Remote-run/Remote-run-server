@@ -13,7 +13,7 @@ For running in ether slave or master mode:
 - The system system_resources.yaml needs to be filled it tels the application how mutch resources you are ok with docker using.
 
 If you want to run more than one worker you will need:
-- some sort of network disk system is required to share the save data dir. chose whatever system you are comfortable with given that the application is kind of state based ish makes write conflicts practically not possible. I personally just use the nfs-kernel-server because it is easy and works. 
+- some sort of network disk system is required to share the save data dir. chose whatever system you are comfortable with given that the application is kind of state based ish makes write conflicts practically not possible. I personally just use the nfs-kernel-server because it is easy and works. It is important that the volume is mounted to the Remote-run-server/save_data **Before** start_(master/worker) is run.
 - A NIC with a local adress to allow other workers to connect to the host DB it is **strongly** recommended not to use the public interface if so it is very important to change the default password currently used
 
 
