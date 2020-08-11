@@ -1,5 +1,6 @@
 package no.ntnu.master;
 
+import no.ntnu.dockerComputeRecources.ComputeResources;
 import no.ntnu.dockerComputeRecources.WorkerNodeResourceManager;
 import no.ntnu.sql.SystemDbFunctions;
 import no.ntnu.sql.TicketDbFunctions;
@@ -21,6 +22,7 @@ public class ResourceWatcher extends Watcher{
         super(waitTime);
         this.checkInIntervalBuffer = checkInIntervalBuffer;
         this.checkInInterval = checkInInterval;
+        ComputeResources.syncLocalAndDbKeys();
     }
 
 
@@ -107,7 +109,7 @@ public class ResourceWatcher extends Watcher{
                             capableManagers[0].stageTicketForWorker(ticket);
                             dbl.log("Adding ", ticket.getCommonName(), " to backlog on runner ", capableManagers[0].getWorkerID());
                         } else {
-                            dbl.log("\n NO CAPABLE RUNNERS FOR:", ticket.getTicketId());
+                            dbl.log("NO CAPABLE RUNNERS FOR:", ticket.getTicketId());
                           // TODO: this means there are no system capable of running the ticket atm just wait
                         }
 

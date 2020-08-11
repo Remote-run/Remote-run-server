@@ -3,7 +3,6 @@ package no.ntnu.dockerComputeRecources;
 import no.ntnu.dockerComputeRecources.ResourceTypes.*;
 import no.ntnu.sql.SystemDbFunctions;
 import no.trygvejw.debugLogger.DebugLogger;
-import org.postgresql.util.JdbcBlackHole;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -47,7 +46,7 @@ public class ComputeResources {
         return ret;
     }
 
-    private static void updateLocalKeys(){
+    public static void syncLocalAndDbKeys(){
         try {
             Vector<ResourceKey> mabyeNewDbKeys = new Vector(Arrays.asList(SystemDbFunctions.getDbTicketResourceKeys()));
             Vector<ResourceKey> mabyeNewYamlKeys = ReadYamlResourceKeys();
@@ -88,7 +87,7 @@ public class ComputeResources {
 
         if (keys.stream().noneMatch(resourceKey -> resourceKey.resourceId.equals(key))){
             dbl.log("not in local keys", key);
-            updateLocalKeys();
+            syncLocalAndDbKeys();
         }
 
         ResourceKey[] resourceKeys = keys.stream().filter(resourceKey -> resourceKey.resourceId.equals(key)).toArray(ResourceKey[]::new);
