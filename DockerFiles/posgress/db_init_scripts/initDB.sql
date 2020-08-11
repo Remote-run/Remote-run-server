@@ -3,11 +3,11 @@
  This is the different resourse keys which describes an ammounnt or compute resource boud to a key
  */
 CREATE TABLE IF NOT EXISTS resource_keys(
-    id          text primary key not null,
-
-    gpu         int,
-    cpu         int,
-    gig_ram     int
+    id              text primary key not null,
+    gpu             int,
+    cpu             int,
+    gig_ram         int,
+    timeout_Seconds int
 );
 
 /*

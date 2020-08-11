@@ -4,8 +4,11 @@ package no.ntnu.DockerInterface;
 import no.trygvejw.debugLogger.DebugLogger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * The base for the docker commands provides a safe ish way of executing them with some options
@@ -25,6 +28,28 @@ public abstract class DockerCommand {
     private BiConsumer<Process, Throwable> onComplete;
 
     private boolean isBlocking = false;
+
+    private int timeoutSeconds = -1;
+    private Consumer<Process> onTimeout = null;
+
+    /**
+     * Sets the timeout in seconds for the process. defult is -1 any second value < 0 means no timeout
+     *
+     * @param timeoutSeconds the timeout in seconds for the process
+     */
+    public void setTimeout(int timeoutSeconds){
+
+        this.timeoutSeconds = timeoutSeconds;
+    }
+
+    /**
+     * Sets the method to run if the processes run time exceeds the defined limit
+     *
+     * @param onTimeout the consumer to run the prosess object is supplied
+     */
+    public void setOnTimeout(Consumer<Process> onTimeout){
+        this.onTimeout = onTimeout;
+    }
 
     /**
      * Sets the output file for the standard out for the command.
@@ -128,10 +153,29 @@ public abstract class DockerCommand {
             builder.inheritIO();
         }
 
+
+
         Process process = null;
         try {
             process = builder.start();
 
+
+            if (this.timeoutSeconds > 0){
+                Process processCopy = process;
+                Thread t = new Thread(() -> {
+                    try {
+                        if (!processCopy.waitFor(this.timeoutSeconds, TimeUnit.SECONDS)){
+                        // if the timeout is reached before the process is complete
+                            processCopy.destroy();
+                            if(this.onTimeout != null){
+                                onTimeout.accept(processCopy);
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
 
             if (this.onComplete != null) {
                 process.onExit().whenComplete(onComplete);
@@ -142,12 +186,13 @@ public abstract class DockerCommand {
             }
 
 
-        } catch (Exception e) {
-            // TODO: more finsee in handeling here is probably smart
+        } catch (IOException e) {
             e.printStackTrace();
-        }
+        } catch (InterruptedException e){} // this means the process was interrupted likely due to a timeout
+
         return process;
     }
+
 
     /**
      * Builds the docker command and returns a list of the command parts.

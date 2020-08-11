@@ -34,7 +34,8 @@ public class SystemDbFunctions extends PsqlDb{
                     resultSet.getString("id"),
                     resultSet.getInt("gpu"),
                     resultSet.getInt("cpu"),
-                    resultSet.getInt("gig_ram")));
+                    resultSet.getInt("gig_ram"),
+                    resultSet.getInt("timeout_Seconds")));
         });
 
         return tmpList.toArray(ComputeResources.ResourceKey[]::new);
@@ -61,7 +62,8 @@ public class SystemDbFunctions extends PsqlDb{
                     resultSet.getString("id"),
                     resultSet.getInt("gpu"),
                     resultSet.getInt("cpu"),
-                    resultSet.getInt("gig_ram"));
+                    resultSet.getInt("gig_ram"),
+                    resultSet.getInt("timeout_Seconds"));
             resourceManager.set(new WorkerNodeResourceManager(ComputeResources.mapUnitToComputeResource(resourceKey), workerId));
         });
 
@@ -142,8 +144,8 @@ public class SystemDbFunctions extends PsqlDb{
 
     public static void addResourceKey(ComputeResources.ResourceKey resourceKey) {
 
-        String query = "INSERT INTO resource_keys (id, gpu, cpu, gig_ram) VALUES " +
-                String.format("('%s' , %s, %s, %s);", resourceKey.resourceId, resourceKey.gpuSlots, resourceKey.cpus, resourceKey.gigRam);
+        String query = "INSERT INTO resource_keys (id, gpu, cpu, gig_ram, timeoutSeconds) VALUES " +
+                String.format("('%s' , %s, %s, %s, %s);", resourceKey.resourceId, resourceKey.gpuSlots, resourceKey.cpus, resourceKey.gigRam, resourceKey.timeoutSeconds);
         sqlUpdate(query);
     }
 

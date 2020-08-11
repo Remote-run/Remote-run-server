@@ -22,6 +22,7 @@ public abstract class RunnableTicket extends Ticket {
 
     // to ensure no double run
     private boolean isRunning = false;
+    private boolean didTimeOut = false;
 
 
     /**
@@ -74,7 +75,10 @@ public abstract class RunnableTicket extends Ticket {
                 e.printStackTrace();
             }
 
-        } else {
+        } else if(didTimeOut) {
+            dbl.log("TIMEOUT FOR TICKET ID:", ticketId);
+            this.voidTicket(TicketExitReason.timeout);
+        }else {
             dbl.log("RUN ERROR FOR TICKET ID:", ticketId);
             this.voidTicket(TicketExitReason.runError);
         }
@@ -145,6 +149,11 @@ public abstract class RunnableTicket extends Ticket {
                         runCommand.setErrorFile(new File(this.logDir, "run_error"));
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
                         runCommand.setOnComplete(this::onComplete);
+
+                        if (this.getResourceKey().timeoutSeconds > 0){
+                            runCommand.setTimeout(this.getResourceKey().timeoutSeconds);
+                            runCommand.setOnTimeout(process -> this.didTimeOut = true);
+                        }
 
                         this.setState(TicketStatus.RUNNING);
                         runCommand.run();

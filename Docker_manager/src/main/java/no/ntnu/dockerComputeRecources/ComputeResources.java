@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public class ComputeResources {
     private static final File resourceKeysFile = new File("/app/resource_tags.yaml");
     private static final File systemResourceFile = new File("/app/system_resources.yaml");
-    public  static final ResourceKey defaultKey = new ResourceKey("DEFAULT",1,-1,-1);
+    public  static final ResourceKey defaultKey = new ResourceKey("DEFAULT",1,10,-1, 3600);
     private static final Vector<ResourceKey> keys = new Vector<>();
 
     private static final DebugLogger dbl = new DebugLogger(false);
@@ -140,14 +140,16 @@ public class ComputeResources {
         public int gpuSlots;
         public int cpus;
         public int gigRam;
+        public int timeoutSeconds;
 
         public ResourceKey(){}
 
-        public ResourceKey(String resourceId, int gpuSlots, int cpus, int gigRam) {
+        public ResourceKey(String resourceId, int gpuSlots, int cpus, int gigRam, int timeoutSeconds) {
             this.resourceId = resourceId;
             this.gpuSlots = gpuSlots;
             this.cpus = cpus;
             this.gigRam = gigRam;
+            this.timeoutSeconds = timeoutSeconds;
         }
 
 
