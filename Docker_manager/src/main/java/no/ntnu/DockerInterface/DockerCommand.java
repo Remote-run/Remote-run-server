@@ -165,16 +165,23 @@ public abstract class DockerCommand {
                 Thread t = new Thread(() -> {
                     try {
                         if (!processCopy.waitFor(this.timeoutSeconds, TimeUnit.SECONDS)){
-                        // if the timeout is reached before the process is complete
+                            // if the timeout is reached before the process is complete
                             processCopy.destroy();
                             if(this.onTimeout != null){
                                 onTimeout.accept(processCopy);
+                            }
+
+                            // give the process 5 sec to shut down if not complete kill it forcefully
+                            Thread.sleep(5000);
+                            if(processCopy.isAlive()){
+                                processCopy.destroyForcibly();
                             }
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 });
+                t.start();
             }
 
             if (this.onComplete != null) {
