@@ -150,8 +150,11 @@ public abstract class RunnableTicket extends Ticket {
                         runCommand.setOutputFile(new File(this.logDir, "run_out"));
                         runCommand.setOnComplete(this::onComplete);
 
-                        if (this.getResourceKey().timeoutSeconds > 0){
-                            runCommand.setTimeout(this.getResourceKey().timeoutSeconds);
+                        var resourceKey = this.getResourceKey();
+
+                        if (resourceKey.timeoutSeconds > 0){
+                            dbl.log("Timeout set for: ",resourceKey.timeoutSeconds );
+                            runCommand.setTimeout(resourceKey.timeoutSeconds);
                             runCommand.setOnTimeout(process -> this.didTimeOut = true);
                         }
 

@@ -3,8 +3,10 @@ keys:
     gpuSlots: 1
     cpus: 10
     gigRam: 15
+    timeoutSeconds: 3600
   - resourceId: "10CPU"
     gpuSlots: -1
     cpus: 10
     gigRam: 10
+    timeoutSeconds: 3600
  

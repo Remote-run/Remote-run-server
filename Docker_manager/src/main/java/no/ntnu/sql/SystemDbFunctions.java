@@ -53,7 +53,7 @@ public class SystemDbFunctions extends PsqlDb{
     public static WorkerNodeResourceManager getWorkerResourceManagerById(UUID workerId) {
         AtomicReference<WorkerNodeResourceManager> resourceManager = new AtomicReference<>(null);
         String query = String.format(
-                "SELECT k.id, k.gpu, k.cpu, k.gig_ram " +
+                "SELECT k.id, k.gpu, k.cpu, k.gig_ram, k.timeout_Seconds " +
                 "FROM compute_nodes " +
                 "INNER JOIN resource_keys k ON compute_nodes.resource_key = k.id " +
                 "WHERE compute_nodes.id = '%s';",workerId);
@@ -144,7 +144,7 @@ public class SystemDbFunctions extends PsqlDb{
 
     public static void addResourceKey(ComputeResources.ResourceKey resourceKey) {
 
-        String query = "INSERT INTO resource_keys (id, gpu, cpu, gig_ram, timeoutSeconds) VALUES " +
+        String query = "INSERT INTO resource_keys (id, gpu, cpu, gig_ram, timeout_Seconds) VALUES " +
                 String.format("('%s' , %s, %s, %s, %s);", resourceKey.resourceId, resourceKey.gpuSlots, resourceKey.cpus, resourceKey.gigRam, resourceKey.timeoutSeconds);
         sqlUpdate(query);
     }
