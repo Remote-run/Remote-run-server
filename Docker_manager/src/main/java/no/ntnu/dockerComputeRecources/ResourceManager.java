@@ -83,6 +83,9 @@ public class ResourceManager {
                     isFree = false;
                     break;
                 }
+            } else{
+                isFree = false;
+                break;
             }
         }
 
