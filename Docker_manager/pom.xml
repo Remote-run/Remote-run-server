@@ -59,7 +59,7 @@
 
     <dependency>
       <groupId>no.ntnu</groupId>
-      <artifactId>ClientRunner</artifactId>
+      <artifactId>Remote-run-client</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
